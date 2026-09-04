@@ -12,6 +12,7 @@ interface TerrainOverlayProps {
   rearThreatZone?: string;
   speed?: number;
   engineActive?: boolean;
+  truckX?: number;
 }
 
 export const TerrainOverlay: React.FC<TerrainOverlayProps> = ({
@@ -22,6 +23,7 @@ export const TerrainOverlay: React.FC<TerrainOverlayProps> = ({
   rearThreatZone = 'ZONE_3_SAFE',
   speed = 0,
   engineActive = false,
+  truckX = 0,
 }) => {
   const fogParticlesRef = useRef<THREE.Points>(null);
   const dustParticlesRef = useRef<THREE.Points>(null);
@@ -153,12 +155,11 @@ export const TerrainOverlay: React.FC<TerrainOverlayProps> = ({
       {/* ========================================================================= */}
 
       {/* 1. GREEN SAFE ZONE RECTANGLE (OUTERMOST - 13m x 22m) */}
-      <group position={[0, -0.045, 0]}>
+      <group position={[truckX, -0.045, 0]}>
         <mesh rotation={[-Math.PI / 2, 0, 0]}>
           <planeGeometry args={[13, 22]} />
           <meshBasicMaterial color="#00E676" transparent opacity={0.08} side={THREE.DoubleSide} />
         </mesh>
-        {/* Border Outline */}
         <lineSegments rotation={[-Math.PI / 2, 0, 0]}>
           <edgesGeometry args={[new THREE.PlaneGeometry(13, 22)]} />
           <lineBasicMaterial color="#00E676" linewidth={2} />
@@ -166,12 +167,11 @@ export const TerrainOverlay: React.FC<TerrainOverlayProps> = ({
       </group>
 
       {/* 2. ORANGE SUSPICIOUS DANGER ZONE RECTANGLE (MIDDLE - 9m x 14m) */}
-      <group position={[0, -0.04, 0]}>
+      <group position={[truckX, -0.04, 0]}>
         <mesh rotation={[-Math.PI / 2, 0, 0]}>
           <planeGeometry args={[9, 14]} />
           <meshBasicMaterial ref={orangeMatRef} color="#FF9100" transparent opacity={0.15} side={THREE.DoubleSide} />
         </mesh>
-        {/* Border Outline */}
         <lineSegments rotation={[-Math.PI / 2, 0, 0]}>
           <edgesGeometry args={[new THREE.PlaneGeometry(9, 14)]} />
           <lineBasicMaterial color="#FF9100" linewidth={2} />
@@ -179,12 +179,11 @@ export const TerrainOverlay: React.FC<TerrainOverlayProps> = ({
       </group>
 
       {/* 3. RED HIGH ALARM / IMMEDIATE HAZARD ZONE RECTANGLE (INNERMOST - 5m x 8m) */}
-      <group position={[0, -0.035, 0]}>
+      <group position={[truckX, -0.035, 0]}>
         <mesh rotation={[-Math.PI / 2, 0, 0]}>
           <planeGeometry args={[5, 8]} />
           <meshBasicMaterial ref={redMatRef} color="#FF1744" transparent opacity={0.22} side={THREE.DoubleSide} />
         </mesh>
-        {/* Border Outline */}
         <lineSegments rotation={[-Math.PI / 2, 0, 0]}>
           <edgesGeometry args={[new THREE.PlaneGeometry(5, 8)]} />
           <lineBasicMaterial color="#FF1744" linewidth={3} />

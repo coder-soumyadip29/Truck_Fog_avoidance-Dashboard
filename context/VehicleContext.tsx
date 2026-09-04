@@ -41,6 +41,7 @@ export interface VehicleContextType {
   rpm: number;
   fogVisibility: number;
   steeringAngle: number;
+  truckX: number; // Lateral position on road (-4.5 to +4.5)
   gear: GearPosition;
   timeToCollision: number;
   threatZone: ThreatZone;
@@ -63,6 +64,7 @@ export interface VehicleContextType {
   setRearDistance: (distance: number) => void;
   setFogVisibility: (fog: number) => void;
   setSteeringAngle: (angle: number) => void;
+  setTruckX: (x: number) => void;
   setGear: (gear: GearPosition) => void;
   setSelectedHealthNode: (nodeId: string | null) => void;
   setRadarMode: (mode: 'DUAL' | 'FORWARD' | 'REAR') => void;
@@ -96,6 +98,7 @@ export const VehicleProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const [rpm, setRpm] = useState<number>(0);
   const [fogVisibility, setFogVisibility] = useState<number>(20); // %
   const [steeringAngle, setSteeringAngle] = useState<number>(0); // deg
+  const [truckX, setTruckX] = useState<number>(0); // lateral X position on road
   const [gear, setGear] = useState<GearPosition>('P');
   const [selectedHealthNode, setSelectedHealthNode] = useState<string | null>(null);
   const [isSimPanelOpen, setIsSimPanelOpen] = useState<boolean>(false);
@@ -282,6 +285,7 @@ export const VehicleProvider: React.FC<{ children: React.ReactNode }> = ({ child
         rpm,
         fogVisibility,
         steeringAngle,
+        truckX,
         gear,
         timeToCollision,
         threatZone,
@@ -302,6 +306,7 @@ export const VehicleProvider: React.FC<{ children: React.ReactNode }> = ({ child
         setRearDistance,
         setFogVisibility,
         setSteeringAngle,
+        setTruckX,
         setGear,
         setSelectedHealthNode,
         setRadarMode,

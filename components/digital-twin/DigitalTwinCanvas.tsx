@@ -8,7 +8,8 @@ import { DumperTruckMesh } from './DumperTruckMesh';
 import { SensorCones } from './SensorCones';
 import { TerrainOverlay } from './TerrainOverlay';
 import { HealthHotspots } from './HealthHotspots';
-import { RefreshCw, Eye, ShieldCheck, Radio } from 'lucide-react';
+import { KeyboardControls } from './KeyboardControls';
+import { RefreshCw, Eye, ShieldCheck, Radio, Gamepad2, ArrowUp, ArrowDown, ArrowLeft, ArrowRight } from 'lucide-react';
 
 export const DigitalTwinCanvas: React.FC = () => {
   const {
@@ -19,22 +20,23 @@ export const DigitalTwinCanvas: React.FC = () => {
     rearDistance,
     fogVisibility,
     steeringAngle,
+    truckX,
     speed,
     selectedHealthNode,
     setSelectedHealthNode,
   } = useVehicle();
 
   return (
-    <div className="relative w-full h-full min-h-[520px] rounded-2xl overflow-hidden glass-panel border border-slate-800">
-      {/* HUD Header Bar */}
+    <div className="relative w-full h-full min-h-[540px] rounded-2xl overflow-hidden glass-panel border border-slate-800">
+      {/* Top HUD Header Bar */}
       <div className="absolute top-4 left-4 right-4 z-10 flex items-center justify-between pointer-events-none">
-        <div className="flex items-center gap-3 bg-slate-900/80 backdrop-blur-md px-3.5 py-1.5 rounded-lg border border-slate-700/60 pointer-events-auto">
+        <div className="flex items-center gap-3 bg-slate-900/90 backdrop-blur-md px-3.5 py-1.5 rounded-lg border border-slate-700/60 pointer-events-auto">
           <div className="w-2.5 h-2.5 rounded-full bg-cyan-400 animate-pulse" />
           <span className="text-xs font-mono font-bold tracking-wider text-slate-200 uppercase">
-            360° DIGITAL TWIN // LIVE ROAD MOTION
+            360° DIGITAL TWIN // ARROW KEY DRIVING GAME MODE
           </span>
-          <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-cyan-500/10 text-cyan-400 border border-cyan-500/30">
-            DUAL RADAR (FWD+REAR)
+          <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
+            KEYBOARD ACTIVE
           </span>
         </div>
 
@@ -46,6 +48,26 @@ export const DigitalTwinCanvas: React.FC = () => {
             <RefreshCw className="w-3.5 h-3.5 text-cyan-400" />
             Reset Camera
           </button>
+        </div>
+      </div>
+
+      {/* Center Game Controls On-Screen Keyboard Guide Pill Overlay */}
+      <div className="absolute top-16 left-1/2 -translate-x-1/2 z-10 pointer-events-none flex items-center gap-2 bg-slate-950/80 backdrop-blur-md px-4 py-2 rounded-full border border-slate-800 text-[11px] font-mono shadow-xl">
+        <Gamepad2 className="w-4 h-4 text-cyan-400 animate-bounce" />
+        <span className="text-slate-400 font-medium">GAME CONTROLS:</span>
+        <div className="flex items-center gap-1 text-white font-bold">
+          <span className="bg-slate-900 px-1.5 py-0.5 rounded border border-slate-700 flex items-center gap-1">
+            <ArrowUp className="w-3 h-3 text-cyan-400" /> W/▲ ACCEL
+          </span>
+          <span className="bg-slate-900 px-1.5 py-0.5 rounded border border-slate-700 flex items-center gap-1">
+            <ArrowDown className="w-3 h-3 text-cyan-400" /> S/▼ BRAKE
+          </span>
+          <span className="bg-slate-900 px-1.5 py-0.5 rounded border border-slate-700 flex items-center gap-1">
+            <ArrowLeft className="w-3 h-3 text-amber-400" /> A/◀ LEFT
+          </span>
+          <span className="bg-slate-900 px-1.5 py-0.5 rounded border border-slate-700 flex items-center gap-1">
+            <ArrowRight className="w-3 h-3 text-amber-400" /> D/▶ RIGHT
+          </span>
         </div>
       </div>
 
@@ -74,22 +96,27 @@ export const DigitalTwinCanvas: React.FC = () => {
         <pointLight position={[-15, 10, -15]} intensity={0.8} color="#FFB300" />
 
         <Suspense fallback={null}>
-          {/* Main 3D Mining Vehicle with Animated Spinning Wheels */}
+          {/* Arrow Keys Driving Physics Controller */}
+          <KeyboardControls />
+
+          {/* Main 3D Mining Vehicle (Moves dynamically with truckX & speed) */}
           <DumperTruckMesh
             steeringAngle={steeringAngle}
             engineActive={engineState === 'ACTIVE'}
             speed={speed}
+            truckX={truckX}
           />
 
-          {/* Dual 24GHz Radar Sensors (Forward + Rear Cones) */}
+          {/* Dual 24GHz Radar Sensors (Translate with truckX) */}
           <SensorCones
             threatZone={threatZone}
             obstacleDistance={distance}
             rearThreatZone={rearThreatZone}
             rearObstacleDistance={rearDistance}
+            truckX={truckX}
           />
 
-          {/* Animated Driving Road, Color-Coded Threat Corridor, Rear Vehicle, Dust */}
+          {/* Concentric Color-Coded Threat Rectangles (Red, Orange, Green centered on truckX) */}
           <TerrainOverlay
             obstacleDistance={distance}
             rearDistance={rearDistance}
@@ -98,6 +125,7 @@ export const DigitalTwinCanvas: React.FC = () => {
             rearThreatZone={rearThreatZone}
             speed={speed}
             engineActive={engineState === 'ACTIVE'}
+            truckX={truckX}
           />
 
           {/* Clickable 3D Health Hotspots */}

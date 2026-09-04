@@ -10,6 +10,7 @@ interface SensorConesProps {
   obstacleDistance: number;
   rearThreatZone?: ThreatZone;
   rearObstacleDistance?: number;
+  truckX?: number;
 }
 
 export const SensorCones: React.FC<SensorConesProps> = ({
@@ -17,6 +18,7 @@ export const SensorCones: React.FC<SensorConesProps> = ({
   obstacleDistance,
   rearThreatZone = 'ZONE_3_SAFE',
   rearObstacleDistance = 11.0,
+  truckX = 0,
 }) => {
   const fwdConeMatRef = useRef<THREE.MeshBasicMaterial>(null);
   const fwdRingRef = useRef<THREE.Mesh>(null);
@@ -24,7 +26,6 @@ export const SensorCones: React.FC<SensorConesProps> = ({
   const rearConeMatRef = useRef<THREE.MeshBasicMaterial>(null);
   const rearRingRef = useRef<THREE.Mesh>(null);
 
-  // Helper to determine cone color
   const getConeColor = (zone: ThreatZone) => {
     if (zone === 'ZONE_1_EMERGENCY') return '#FF1744';
     if (zone === 'ZONE_2_WARNING') return '#FFB300';
@@ -34,11 +35,9 @@ export const SensorCones: React.FC<SensorConesProps> = ({
   const fwdColor = getConeColor(threatZone);
   const rearColor = getConeColor(rearThreatZone);
 
-  // Animate pulse opacity and radar scanning sweep rings for both cones
   useFrame(({ clock }) => {
     const t = clock.getElapsedTime();
 
-    // Forward Cone Animation
     if (fwdConeMatRef.current) {
       if (threatZone === 'ZONE_1_EMERGENCY') {
         fwdConeMatRef.current.opacity = Math.sin(t * 18) * 0.35 + 0.55;
@@ -54,7 +53,6 @@ export const SensorCones: React.FC<SensorConesProps> = ({
       fwdRingRef.current.scale.setScalar(1 + (zPos - 3.2) * 0.25);
     }
 
-    // Rear Cone Animation
     if (rearConeMatRef.current) {
       if (rearThreatZone === 'ZONE_1_EMERGENCY') {
         rearConeMatRef.current.opacity = Math.sin(t * 18) * 0.35 + 0.55;
@@ -78,7 +76,7 @@ export const SensorCones: React.FC<SensorConesProps> = ({
   const rearConeRadius = rearConeLength * 0.45;
 
   return (
-    <group>
+    <group position={[truckX, 0, 0]}>
       {/* --- FORWARD 24GHz mmWAVE RADAR BEAM --- */}
       <group position={[0, 1.0, 3.2]}>
         <group rotation={[Math.PI / 2, 0, 0]} position={[0, 0, fwdConeLength / 2]}>
@@ -95,20 +93,18 @@ export const SensorCones: React.FC<SensorConesProps> = ({
           </mesh>
         </group>
 
-        {/* Forward Scanning Ring */}
         <mesh ref={fwdRingRef} position={[0, 0, 1]}>
           <ringGeometry args={[0.3, 0.45, 32]} />
           <meshBasicMaterial color={fwdColor} transparent opacity={0.6} side={THREE.DoubleSide} />
         </mesh>
 
-        {/* Forward Laser Beam */}
         <mesh position={[0, 0.2, fwdConeLength / 2]}>
           <boxGeometry args={[0.04, 0.04, fwdConeLength]} />
           <meshBasicMaterial color="#00E5FF" transparent opacity={0.8} />
         </mesh>
       </group>
 
-      {/* --- REAR 24GHz mmWAVE RADAR BEAM (BACK OF TRUCK) --- */}
+      {/* --- REAR 24GHz mmWAVE RADAR BEAM --- */}
       <group position={[0, 1.0, -3.2]}>
         <group rotation={[-Math.PI / 2, 0, 0]} position={[0, 0, -rearConeLength / 2]}>
           <mesh>
@@ -124,13 +120,11 @@ export const SensorCones: React.FC<SensorConesProps> = ({
           </mesh>
         </group>
 
-        {/* Rear Scanning Ring */}
         <mesh ref={rearRingRef} position={[0, 0, -1]}>
           <ringGeometry args={[0.3, 0.45, 32]} />
           <meshBasicMaterial color={rearColor} transparent opacity={0.6} side={THREE.DoubleSide} />
         </mesh>
 
-        {/* Rear Laser Beam */}
         <mesh position={[0, 0.2, -rearConeLength / 2]}>
           <boxGeometry args={[0.04, 0.04, rearConeLength]} />
           <meshBasicMaterial color="#FFB300" transparent opacity={0.8} />

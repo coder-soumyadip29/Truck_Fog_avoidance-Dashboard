@@ -8,12 +8,14 @@ interface DumperTruckMeshProps {
   steeringAngle?: number;
   engineActive?: boolean;
   speed?: number;
+  truckX?: number;
 }
 
 export const DumperTruckMesh: React.FC<DumperTruckMeshProps> = ({
   steeringAngle = 0,
   engineActive = false,
   speed = 0,
+  truckX = 0,
 }) => {
   const truckGroup = useRef<THREE.Group>(null);
   const beaconLightRef = useRef<THREE.PointLight>(null);
@@ -29,7 +31,7 @@ export const DumperTruckMesh: React.FC<DumperTruckMeshProps> = ({
     }
 
     // Spin wheels according to speed
-    if (engineActive && speed > 0 && wheelsGroupRef.current) {
+    if (engineActive && Math.abs(speed) > 0 && wheelsGroupRef.current) {
       wheelRotation.current += speed * delta * 0.35;
       wheelsGroupRef.current.children.forEach(wheel => {
         wheel.rotation.x = wheelRotation.current;
@@ -43,7 +45,7 @@ export const DumperTruckMesh: React.FC<DumperTruckMeshProps> = ({
   const rimGold = '#F59E0B';    // Metallic Rim Accent
 
   return (
-    <group ref={truckGroup} position={[0, 0.8, 0]}>
+    <group ref={truckGroup} position={[truckX, 0.8, 0]}>
       {/* --- CHASSIS & MAIN BODY --- */}
       <mesh position={[0, 0.6, 0]} castShadow receiveShadow>
         <boxGeometry args={[3.2, 1.2, 6.0]} />
