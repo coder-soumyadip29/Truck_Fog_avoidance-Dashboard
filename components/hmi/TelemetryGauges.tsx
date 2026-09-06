@@ -33,9 +33,9 @@ export const TelemetryGauges: React.FC<TelemetryGaugesProps> = ({
   const rpmAngle = -120 + (Math.min(rpm, maxRpm) / maxRpm) * 240;
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
       {/* --- SPEEDOMETER GAUGE CARD --- */}
-      <div className="glass-panel p-5 rounded-2xl flex flex-col justify-between relative overflow-hidden">
+      <div className="glass-panel p-4 sm:p-5 rounded-2xl flex flex-col justify-between relative overflow-hidden">
         <div className="flex items-center justify-between z-10">
           <div className="flex items-center gap-2">
             <Gauge className="w-4 h-4 text-cyan-400" />
@@ -50,7 +50,7 @@ export const TelemetryGauges: React.FC<TelemetryGaugesProps> = ({
 
         {/* Circular Speedometer Arc */}
         <div className="relative flex justify-center items-center my-3">
-          <svg width="180" height="130" viewBox="0 0 180 130">
+          <svg viewBox="0 0 180 130" className="w-full max-w-[180px] h-auto">
             <path
               d="M 30 110 A 70 70 0 1 1 150 110"
               fill="none"
@@ -102,7 +102,7 @@ export const TelemetryGauges: React.FC<TelemetryGaugesProps> = ({
       </div>
 
       {/* --- ENGINE RPM & DIAGNOSTICS CARD --- */}
-      <div className="glass-panel p-5 rounded-2xl flex flex-col justify-between relative overflow-hidden">
+      <div className="glass-panel p-4 sm:p-5 rounded-2xl flex flex-col justify-between relative overflow-hidden">
         <div className="flex items-center justify-between z-10">
           <div className="flex items-center gap-2">
             <Activity className="w-4 h-4 text-emerald-400" />
@@ -115,7 +115,7 @@ export const TelemetryGauges: React.FC<TelemetryGaugesProps> = ({
 
         {/* Circular Tachometer Arc */}
         <div className="relative flex justify-center items-center my-3">
-          <svg width="180" height="130" viewBox="0 0 180 130">
+          <svg viewBox="0 0 180 130" className="w-full max-w-[180px] h-auto">
             <path
               d="M 30 110 A 70 70 0 1 1 150 110"
               fill="none"

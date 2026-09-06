@@ -32,6 +32,31 @@ export interface DiagnosticLog {
   message: string;
 }
 
+export interface NearbyVehicle {
+  id: string;
+  name: string;
+  driver: string;
+  type: string;
+  distance: number; // in meters
+  bearing: string; // "AHEAD", "REAR LEFT", "RIGHT", etc.
+  speed: number;
+  status: 'OPERATIONAL' | 'WARNING' | 'EMERGENCY' | 'IDLE';
+  latOffset: number;
+  lngOffset: number;
+}
+
+export interface PitHazard {
+  id: string;
+  title: string;
+  type: 'FOG_HAZARD' | 'BOULDER_OBSTACLE' | 'SLOPE_INSTABILITY' | 'BLAST_ZONE';
+  severity: 'CRITICAL' | 'WARNING' | 'INFO';
+  distance: number;
+  locationName: string;
+  description: string;
+  latOffset: number;
+  lngOffset: number;
+}
+
 export interface VehicleContextType {
   user: UserProfile;
   engineState: EngineState;
@@ -54,11 +79,21 @@ export interface VehicleContextType {
   isMuted: boolean;
   radarMode: 'DUAL' | 'FORWARD' | 'REAR';
   
+  // Fleet GPS & Hazard Tracking
+  nearbyVehicles: NearbyVehicle[];
+  nearestVehicle: NearbyVehicle;
+  pitHazards: PitHazard[];
+  nearestHazard: PitHazard;
+  focusVehicleId: string | null;
+
+  activeInputs: { up: boolean; down: boolean; left: boolean; right: boolean };
+
   // Actions
   loginWithGoogle: (role: UserProfile['role'], name?: string, email?: string) => void;
   logout: () => void;
   triggerEngineStart: () => void;
   triggerEngineStop: () => void;
+  setControlInput: (dir: 'up' | 'down' | 'left' | 'right', active: boolean) => void;
   setSpeed: (speed: number) => void;
   setDistance: (distance: number) => void;
   setRearDistance: (distance: number) => void;
@@ -68,6 +103,7 @@ export interface VehicleContextType {
   setGear: (gear: GearPosition) => void;
   setSelectedHealthNode: (nodeId: string | null) => void;
   setRadarMode: (mode: 'DUAL' | 'FORWARD' | 'REAR') => void;
+  setFocusVehicleId: (id: string | null) => void;
   applyPreset: (preset: 'FOG_HAZARD' | 'RESET_ROUTE' | 'ENGINE_FAULT' | 'AUTO_BRAKE') => void;
   toggleSimPanel: () => void;
   toggleMute: () => void;
@@ -103,6 +139,21 @@ export const VehicleProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const [selectedHealthNode, setSelectedHealthNode] = useState<string | null>(null);
   const [isSimPanelOpen, setIsSimPanelOpen] = useState<boolean>(false);
   const [isMuted, setIsMuted] = useState<boolean>(false);
+
+  // Active driving control inputs state (Keyboard + Touch D-Pad)
+  const [activeInputs, setActiveInputs] = useState<{ up: boolean; down: boolean; left: boolean; right: boolean }>({
+    up: false,
+    down: false,
+    left: false,
+    right: false,
+  });
+
+  const setControlInput = useCallback((dir: 'up' | 'down' | 'left' | 'right', active: boolean) => {
+    setActiveInputs(prev => {
+      if (prev[dir] === active) return prev;
+      return { ...prev, [dir]: active };
+    });
+  }, []);
 
   // Health Metrics
   const [healthMetrics, setHealthMetrics] = useState<HealthMetrics>({
@@ -268,6 +319,100 @@ export const VehicleProvider: React.FC<{ children: React.ReactNode }> = ({ child
     }
   };
 
+  const [focusVehicleId, setFocusVehicleId] = useState<string | null>(null);
+
+  // Compute Live Nearby Fleet Vehicles
+  const nearbyVehicles: NearbyVehicle[] = [
+    {
+      id: 'trk-402',
+      name: 'CAT 797F Heavy Dumper #402',
+      driver: 'Rajesh Kumar',
+      type: 'Heavy Haul Dumper (400T)',
+      distance: parseFloat(distance.toFixed(1)),
+      bearing: 'AHEAD (RAMP 4B)',
+      speed: 18,
+      status: distance < 2.0 ? 'EMERGENCY' : distance <= 5.0 ? 'WARNING' : 'OPERATIONAL',
+      latOffset: 0.0004 + (truckX * 0.00003),
+      lngOffset: 0.0006 + (distance * 0.00008),
+    },
+    {
+      id: 'trk-108',
+      name: 'Komatsu HD785 Hauler #108',
+      driver: 'Amit Singh',
+      type: 'Standard Pit Tipper (100T)',
+      distance: parseFloat((rearDistance + 4.5).toFixed(1)),
+      bearing: 'REAR LEFT (BENCH 2)',
+      speed: 0,
+      status: 'IDLE',
+      latOffset: -0.0008,
+      lngOffset: -0.0010,
+    },
+    {
+      id: 'trk-005',
+      name: 'Scania Heavy Water Tanker #05',
+      driver: 'Suresh Patel',
+      type: 'Dust Suppression Tanker',
+      distance: 42.5,
+      bearing: 'HAUL JUNCTION 3',
+      speed: 24,
+      status: 'OPERATIONAL',
+      latOffset: 0.0012,
+      lngOffset: -0.0005,
+    },
+  ];
+
+  const nearestVehicle = nearbyVehicles[0]; // CAT 797F #402 is nearest ahead
+
+  // Compute Live Pit Hazards
+  const pitHazards: PitHazard[] = [
+    {
+      id: 'haz-fog',
+      title: 'Zero-Visibility Fog Bank',
+      type: 'FOG_HAZARD',
+      severity: fogVisibility > 75 ? 'CRITICAL' : fogVisibility > 50 ? 'WARNING' : 'INFO',
+      distance: parseFloat((distance * 0.85).toFixed(1)),
+      locationName: 'Sector 4B Cutting Face',
+      description: `${fogVisibility}% density fog bank detected via 24GHz LiDAR sensor.`,
+      latOffset: 0.0003,
+      lngOffset: 0.0008,
+    },
+    {
+      id: 'haz-boulder',
+      title: 'Haul Road Rock Obstacle',
+      type: 'BOULDER_OBSTACLE',
+      severity: distance < 3.0 ? 'CRITICAL' : 'WARNING',
+      distance: parseFloat(distance.toFixed(1)),
+      locationName: 'East Ramp Pit Exit 4B',
+      description: 'Dislodged pit rock obstacle detected in forward radar zone.',
+      latOffset: 0.0004,
+      lngOffset: 0.0006,
+    },
+    {
+      id: 'haz-slope',
+      title: 'High-Wall Slope Instability',
+      type: 'SLOPE_INSTABILITY',
+      severity: 'WARNING',
+      distance: 48.0,
+      locationName: 'Sector 4B North Wall',
+      description: 'Geotechnical monitoring ping: 4.2mm wall shift detected.',
+      latOffset: 0.0015,
+      lngOffset: 0.0012,
+    },
+    {
+      id: 'haz-blast',
+      title: 'Active Blasting Sector',
+      type: 'BLAST_ZONE',
+      severity: 'INFO',
+      distance: 110.0,
+      locationName: 'Sector 5 South Bench',
+      description: 'Scheduled blasting zone - Restricted vehicle clearance.',
+      latOffset: -0.0020,
+      lngOffset: 0.0018,
+    },
+  ];
+
+  const nearestHazard = pitHazards.reduce((prev, curr) => (curr.distance < prev.distance ? curr : prev), pitHazards[0]);
+
   const toggleSimPanel = () => setIsSimPanelOpen(prev => !prev);
   const toggleMute = () => {
     const muted = audioSynth.toggleMute();
@@ -297,10 +442,17 @@ export const VehicleProvider: React.FC<{ children: React.ReactNode }> = ({ child
         isSimPanelOpen,
         isMuted,
         radarMode,
+        activeInputs,
+        nearbyVehicles,
+        nearestVehicle,
+        pitHazards,
+        nearestHazard,
+        focusVehicleId,
         loginWithGoogle,
         logout,
         triggerEngineStart,
         triggerEngineStop,
+        setControlInput,
         setSpeed,
         setDistance,
         setRearDistance,
@@ -310,6 +462,7 @@ export const VehicleProvider: React.FC<{ children: React.ReactNode }> = ({ child
         setGear,
         setSelectedHealthNode,
         setRadarMode,
+        setFocusVehicleId,
         applyPreset,
         toggleSimPanel,
         toggleMute,

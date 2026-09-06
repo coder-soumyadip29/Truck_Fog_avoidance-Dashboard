@@ -27,19 +27,20 @@ export const DemoSimPanel: React.FC = () => {
   return (
     <>
       {/* Floating Trigger Button (Right Side) */}
+      {/* Floating Trigger Button (Right Side) */}
       {!isSimPanelOpen && (
         <button
           onClick={toggleSimPanel}
-          className="fixed right-6 bottom-6 z-50 flex items-center gap-2.5 px-4 py-3 rounded-full bg-cyan-500 text-slate-950 font-mono font-bold text-xs shadow-[0_0_30px_rgba(0,229,255,0.5)] border border-cyan-300 hover:scale-105 active:scale-95 transition-all duration-300"
+          className="fixed right-3 bottom-3 sm:right-6 sm:bottom-6 z-50 flex items-center gap-2 px-3.5 py-2.5 sm:px-4 sm:py-3 rounded-full bg-cyan-500 text-slate-950 font-mono font-bold text-[11px] sm:text-xs shadow-[0_0_30px_rgba(0,229,255,0.5)] border border-cyan-300 hover:scale-105 active:scale-95 transition-all duration-300"
         >
-          <Sliders className="w-4 h-4 animate-spin-slow" />
-          <span>DEMO SIMULATOR PANEL</span>
+          <Sliders className="w-3.5 h-3.5 sm:w-4 sm:h-4 animate-spin-slow" />
+          <span>SIMULATOR</span>
         </button>
       )}
 
       {/* Slide-out Drawer */}
       <div
-        className={`fixed top-0 right-0 bottom-0 z-50 w-full sm:w-[440px] bg-slate-950/95 backdrop-blur-xl border-l border-slate-800 shadow-2xl p-6 flex flex-col justify-between overflow-y-auto transition-all duration-300 transform ${
+        className={`fixed top-0 right-0 bottom-0 z-50 w-full sm:w-[440px] bg-slate-950/95 backdrop-blur-xl border-l border-slate-800 shadow-2xl p-4 sm:p-6 flex flex-col justify-between overflow-y-auto transition-all duration-300 transform ${
           isSimPanelOpen ? 'translate-x-0' : 'translate-x-full'
         }`}
       >

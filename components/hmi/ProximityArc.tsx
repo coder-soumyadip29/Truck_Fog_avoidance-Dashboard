@@ -66,7 +66,7 @@ export const ProximityArc: React.FC<ProximityArcProps> = ({
 
       {/* SVG 180° Curved Radar Arc */}
       <div className="relative flex justify-center items-center py-2">
-        <svg width="320" height="180" viewBox="0 0 320 180" className="overflow-visible">
+        <svg viewBox="0 0 320 180" className="w-full max-w-[320px] h-auto overflow-visible">
           <defs>
             <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
               <feGaussianBlur stdDeviation="6" result="blur" />

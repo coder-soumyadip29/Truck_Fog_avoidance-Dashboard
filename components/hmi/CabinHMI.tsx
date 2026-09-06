@@ -1,11 +1,12 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import { useVehicle } from '../../context/VehicleContext';
 import { ProximityArc } from './ProximityArc';
 import { TelemetryGauges } from './TelemetryGauges';
 import { HazardAlertBanner } from './HazardAlertBanner';
-import { Terminal, Volume2, VolumeX } from 'lucide-react';
+import { PitMap } from './PitMap';
+import { Terminal, Volume2, VolumeX, Radio, Map, Truck, ShieldAlert } from 'lucide-react';
 
 export const CabinHMI: React.FC = () => {
   const {
@@ -23,7 +24,11 @@ export const CabinHMI: React.FC = () => {
     diagnosticLogs,
     isMuted,
     toggleMute,
+    nearestVehicle,
+    nearestHazard,
   } = useVehicle();
+
+  const [hmiTab, setHmiTab] = useState<'RADAR_ARC' | 'PIT_MAP'>('RADAR_ARC');
 
   return (
     <div className="flex flex-col gap-4 w-full h-full">
@@ -35,17 +40,57 @@ export const CabinHMI: React.FC = () => {
         speed={speed}
       />
 
+      {/* View Switcher Bar */}
+      <div className="flex items-center justify-between gap-2 px-1 font-mono text-xs">
+        <div className="flex items-center gap-2 bg-slate-950/80 p-1 rounded-xl border border-slate-800">
+          <button
+            onClick={() => setHmiTab('RADAR_ARC')}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all font-bold ${
+              hmiTab === 'RADAR_ARC'
+                ? 'bg-cyan-500 text-slate-950 shadow-md shadow-cyan-500/20'
+                : 'text-slate-400 hover:text-white'
+            }`}
+          >
+            <Radio className="w-3.5 h-3.5" />
+            <span>24GHz RADAR ARC</span>
+          </button>
+          <button
+            onClick={() => setHmiTab('PIT_MAP')}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all font-bold ${
+              hmiTab === 'PIT_MAP'
+                ? 'bg-cyan-500 text-slate-950 shadow-md shadow-cyan-500/20'
+                : 'text-slate-400 hover:text-white'
+            }`}
+          >
+            <Map className="w-3.5 h-3.5" />
+            <span>GIS PIT & HAZARD MAP</span>
+          </button>
+        </div>
+
+        {/* Nearest Truck Live Proximity Pill */}
+        <div className="hidden sm:flex items-center gap-2 bg-slate-900/80 px-3 py-1.5 rounded-xl border border-slate-800 font-mono text-[11px]">
+          <Truck className="w-3.5 h-3.5 text-cyan-400 shrink-0 animate-pulse" />
+          <span className="text-slate-400">NEAREST FLEET:</span>
+          <span className="font-bold text-white">{nearestVehicle.name.split(' ')[0]} {nearestVehicle.name.split(' ').pop()}</span>
+          <span className="text-cyan-300 font-bold">({nearestVehicle.distance.toFixed(1)}m)</span>
+        </div>
+      </div>
+
       {/* Main HMI Layout Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
-        {/* Left / Center 180° Radar Arc */}
+        {/* Left / Center View Component (Radar Arc OR Pit Map) */}
         <div className="lg:col-span-5 flex flex-col">
-          <ProximityArc
-            threatZone={threatZone}
-            emesrtLevel={emesrtLevel}
-            distance={distance}
-            rearDistance={rearDistance}
-            timeToCollision={timeToCollision}
-          />
+          {hmiTab === 'RADAR_ARC' ? (
+            <ProximityArc
+              threatZone={threatZone}
+              emesrtLevel={emesrtLevel}
+              distance={distance}
+              rearDistance={rearDistance}
+              timeToCollision={timeToCollision}
+            />
+          ) : (
+            <PitMap />
+          )}
         </div>
 
         {/* Right Gauges & Diagnostics */}
