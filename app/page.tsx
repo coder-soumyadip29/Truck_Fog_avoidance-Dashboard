@@ -26,11 +26,11 @@ export default function Home() {
               <Shield className="w-5 h-5 sm:w-6 sm:h-6 text-slate-950" />
             </div>
             <div>
-              <h1 className="font-mono text-sm sm:text-lg font-extrabold text-white tracking-wide truncate">
-                AEGIS<span className="text-cyan-400">MINE</span> // CABIN HMI
+              <h1 className="font-orbitron text-base sm:text-xl font-black text-white tracking-wider truncate">
+                AEGIS<span className="text-cyan-400 text-glow-accent">MINE</span> <span className="text-xs font-mono text-slate-400">// CABIN HMI</span>
               </h1>
-              <p className="text-[9px] sm:text-[10px] font-mono text-slate-400 truncate">
-                OPEN-CAST PIT SECTOR 4B // EMESRT L9 CAS
+              <p className="text-[9px] sm:text-[10px] font-mono text-cyan-400/80 truncate">
+                OPEN-CAST PIT SECTOR 4B // EMESRT LEVEL 9 CAS
               </p>
             </div>
           </div>
