@@ -14,6 +14,7 @@ interface TerrainOverlayProps {
   engineActive?: boolean;
   truckX?: number;
   roadsideScenario?: string;
+  lidarHeatmapMode?: boolean;
 }
 
 export const TerrainOverlay: React.FC<TerrainOverlayProps> = ({
@@ -26,6 +27,7 @@ export const TerrainOverlay: React.FC<TerrainOverlayProps> = ({
   engineActive = false,
   truckX = 0,
   roadsideScenario = 'CLEAR',
+  lidarHeatmapMode = false,
 }) => {
   const fogParticlesRef = useRef<THREE.Points>(null);
   const dustParticlesRef = useRef<THREE.Points>(null);
@@ -103,6 +105,17 @@ export const TerrainOverlay: React.FC<TerrainOverlayProps> = ({
     dustPos[i] = (Math.random() - 0.5) * 3.6;
     dustPos[i + 1] = Math.random() * 0.8;
     dustPos[i + 2] = -2.5 - Math.random() * 8;
+  }
+
+  // 24GHz LiDAR Point Cloud grid points
+  const lidarCount = 450;
+  const lidarPos = new Float32Array(lidarCount * 3);
+  for (let i = 0; i < lidarCount * 3; i += 3) {
+    const angle = (i / 3) * 0.14;
+    const radius = 1.8 + ((i / 3) % 30) * 0.55;
+    lidarPos[i] = Math.cos(angle) * radius;
+    lidarPos[i + 1] = Math.sin(angle * 3) * 0.6 + 0.3;
+    lidarPos[i + 2] = Math.sin(angle) * radius;
   }
 
   // Forward obstacle mesh position and threat color
@@ -470,6 +483,32 @@ export const TerrainOverlay: React.FC<TerrainOverlayProps> = ({
             depthWrite={false}
           />
         </points>
+      )}
+
+      {/* --- 24GHz LIDAR POINT-CLOUD HEATMAP SCANNING MATRIX --- */}
+      {lidarHeatmapMode && (
+        <group position={[truckX, 0, 0]}>
+          <points>
+            <bufferGeometry>
+              <bufferAttribute attach="attributes-position" args={[lidarPos, 3]} />
+            </bufferGeometry>
+            <pointsMaterial size={1.4} color="#00E5FF" transparent opacity={0.85} depthWrite={false} />
+          </points>
+
+          {/* Dynamic Laser Scanning Concentric Rings */}
+          {[5, 10, 15, 20].map((r, idx) => (
+            <mesh key={idx} rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.05, 0]}>
+              <ringGeometry args={[r - 0.15, r, 64]} />
+              <meshBasicMaterial color="#00E5FF" transparent opacity={0.45 - idx * 0.09} side={THREE.DoubleSide} />
+            </mesh>
+          ))}
+
+          {/* Roof-Mounted 360 Laser Dome Scan Cone */}
+          <mesh position={[0, 3.8, 0]} rotation={[Math.PI, 0, 0]}>
+            <coneGeometry args={[14, 4.5, 32, 1, true]} />
+            <meshBasicMaterial color="#00E5FF" wireframe transparent opacity={0.25} />
+          </mesh>
+        </group>
       )}
     </group>
   );

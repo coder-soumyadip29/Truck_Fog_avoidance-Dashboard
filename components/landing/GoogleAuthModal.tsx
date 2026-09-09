@@ -30,6 +30,12 @@ export const GoogleAuthModal: React.FC<GoogleAuthModalProps> = ({ isOpen, onClos
       avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=256',
       badge: 'Fleet Haul Operator #402',
     },
+    {
+      name: 'Guest Safety Auditor',
+      email: 'guest.auditor@aegismine.dgms.gov.in',
+      avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&q=80&w=256',
+      badge: '1-Click Instant Guest Demo',
+    },
   ];
 
   const handleSignIn = (userItem: (typeof mockUsers)[0]) => {

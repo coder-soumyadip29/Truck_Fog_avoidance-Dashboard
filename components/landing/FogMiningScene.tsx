@@ -1,13 +1,33 @@
 'use client';
 
 import React, { useEffect, useRef, useState } from 'react';
-import { CloudFog, Eye, Sparkles, Wind, Sliders } from 'lucide-react';
+import { CloudFog, Eye, Sparkles, Wind, Sliders, Volume2, ShieldAlert, Radio, Activity, Box, Play } from 'lucide-react';
+import { audioSynth } from '../../utils/audioSynth';
+import { useVehicle } from '../../context/VehicleContext';
 
 export const FogMiningScene: React.FC = () => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const [fogDensity, setFogDensity] = useState<number>(85); // 85% fog
+  const [activeTab, setActiveTab] = useState<'RADAR_FOG' | 'TELEMETRY'>('RADAR_FOG');
+  const [isBrakeTriggered, setIsBrakeTriggered] = useState(false);
+  const { loginWithGoogle } = useVehicle();
+
+  const handleBrakeTest = () => {
+    setIsBrakeTriggered(true);
+    audioSynth.playAirBrakeHiss();
+    setTimeout(() => setIsBrakeTriggered(false), 2200);
+  };
+
+  const handleHornDemo = () => {
+    audioSynth.playTruckHorn();
+  };
+
+  const handleGuestLaunch = () => {
+    loginWithGoogle('Chief Safety Engineer', 'Guest Operator', 'guest@aegismine.dgms.gov.in');
+  };
 
   useEffect(() => {
+    if (activeTab !== 'RADAR_FOG') return;
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
@@ -81,7 +101,7 @@ export const FogMiningScene: React.FC = () => {
       ctx.fill();
 
       // Haul Road Path Line (Glowing Amber Accent Line)
-      ctx.strokeStyle = 'rgba(255, 184, 0, 0.35)';
+      ctx.strokeStyle = isBrakeTriggered ? '#FF1744' : 'rgba(255, 184, 0, 0.35)';
       ctx.lineWidth = 4;
       ctx.setLineDash([12, 8]);
       ctx.beginPath();
@@ -89,6 +109,16 @@ export const FogMiningScene: React.FC = () => {
       ctx.bezierCurveTo(width * 0.35, height * 0.62, width * 0.65, height * 0.82, width, height * 0.75);
       ctx.stroke();
       ctx.setLineDash([]);
+
+      // 24GHz RADAR SCAN RAYS PENETRATING FOG
+      const time = Date.now() * 0.003;
+      const radarSweepX = (Math.sin(time) * 0.5 + 0.5) * width;
+      const sweepGrad = ctx.createLinearGradient(radarSweepX - 80, 0, radarSweepX + 80, 0);
+      sweepGrad.addColorStop(0, 'rgba(0, 240, 255, 0)');
+      sweepGrad.addColorStop(0.5, 'rgba(0, 240, 255, 0.35)');
+      sweepGrad.addColorStop(1, 'rgba(0, 240, 255, 0)');
+      ctx.fillStyle = sweepGrad;
+      ctx.fillRect(radarSweepX - 80, 0, 160, height);
 
       // Pit Light Tower Beacons
       const lightTowers = [
@@ -113,8 +143,10 @@ export const FogMiningScene: React.FC = () => {
       });
 
       // 3. MOVING MINING TRUCK #1 (CAT 797F Moving Right)
-      truck1X += 1.2;
-      if (truck1X > width + 150) truck1X = -150;
+      if (!isBrakeTriggered) {
+        truck1X += 1.2;
+        if (truck1X > width + 150) truck1X = -150;
+      }
       const truck1Y = height * 0.7 - Math.sin(truck1X * 0.005) * 20;
 
       // Headlight Beam Cone (Piercing through Fog)
@@ -123,7 +155,7 @@ export const FogMiningScene: React.FC = () => {
         truck1X + 260, truck1Y - 10, 180
       );
       headlightGrad.addColorStop(0, 'rgba(255, 255, 255, 0.85)');
-      headlightGrad.addColorStop(0.4, 'rgba(0, 240, 255, 0.35)');
+      headlightGrad.addColorStop(0.4, isBrakeTriggered ? 'rgba(255, 23, 68, 0.6)' : 'rgba(0, 240, 255, 0.35)');
       headlightGrad.addColorStop(1, 'rgba(0, 240, 255, 0)');
 
       ctx.fillStyle = headlightGrad;
@@ -134,8 +166,15 @@ export const FogMiningScene: React.FC = () => {
       ctx.closePath();
       ctx.fill();
 
+      // Threat Zone Radar Box around Truck
+      ctx.strokeStyle = isBrakeTriggered ? '#FF1744' : '#00E676';
+      ctx.lineWidth = 2;
+      ctx.setLineDash([4, 4]);
+      ctx.strokeRect(truck1X - 55, truck1Y - 55, 120, 75);
+      ctx.setLineDash([]);
+
       // Truck Body (CAT 797F Mining Dumper Silhouette)
-      ctx.fillStyle = '#FFB800'; // CAT Yellow
+      ctx.fillStyle = isBrakeTriggered ? '#FF1744' : '#FFB800'; // CAT Yellow / Red Brake
       ctx.fillRect(truck1X - 35, truck1Y - 30, 75, 26);
       ctx.fillStyle = '#1E293B'; // Dump Body Top
       ctx.fillRect(truck1X - 45, truck1Y - 45, 60, 20);
@@ -153,8 +192,10 @@ export const FogMiningScene: React.FC = () => {
       ctx.stroke();
 
       // 4. MOVING MINING TRUCK #2 (Komatsu 400T Moving Left)
-      truck2X -= 0.9;
-      if (truck2X < -150) truck2X = width + 150;
+      if (!isBrakeTriggered) {
+        truck2X -= 0.9;
+        if (truck2X < -150) truck2X = width + 150;
+      }
       const truck2Y = height * 0.46 - Math.cos(truck2X * 0.004) * 15;
 
       // Headlight Beam Left
@@ -215,62 +256,156 @@ export const FogMiningScene: React.FC = () => {
       window.removeEventListener('resize', handleResize);
       cancelAnimationFrame(animationFrameId);
     };
-  }, [fogDensity]);
+  }, [fogDensity, activeTab, isBrakeTriggered]);
 
   return (
-    <div className="relative w-full h-[420px] sm:h-[500px] lg:h-[580px] rounded-3xl overflow-hidden glass-panel border border-slate-700/60 shadow-[0_25px_60px_rgba(0,0,0,0.8)]">
-      {/* HTML5 Animated Canvas */}
-      <canvas ref={canvasRef} className="absolute inset-0 w-full h-full" />
+    <div className="relative w-full h-[460px] sm:h-[520px] lg:h-[600px] rounded-3xl overflow-hidden glass-panel-accent border border-cyan-500/40 shadow-[0_25px_60px_rgba(0,240,255,0.15)] flex flex-col justify-between p-3 sm:p-4">
+      {/* Top Header Mode Tabs & Badge Bar */}
+      <div className="z-20 flex flex-wrap items-center justify-between gap-2">
+        <div className="flex items-center gap-1.5 bg-slate-950/90 backdrop-blur-md p-1 rounded-2xl border border-slate-800 font-mono text-xs">
+          <button
+            onClick={() => setActiveTab('RADAR_FOG')}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl font-bold transition-all ${
+              activeTab === 'RADAR_FOG'
+                ? 'bg-cyan-500 text-slate-950 shadow-lg shadow-cyan-500/30'
+                : 'text-slate-400 hover:text-white'
+            }`}
+          >
+            <Radio className="w-3.5 h-3.5" />
+            <span>2D RADAR FOG</span>
+          </button>
+          <button
+            onClick={() => setActiveTab('TELEMETRY')}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl font-bold transition-all ${
+              activeTab === 'TELEMETRY'
+                ? 'bg-cyan-500 text-slate-950 shadow-lg shadow-cyan-500/30'
+                : 'text-slate-400 hover:text-white'
+            }`}
+          >
+            <Activity className="w-3.5 h-3.5" />
+            <span>LIVE MATRIX</span>
+          </button>
+        </div>
 
-      {/* Atmospheric Scanning Overlay */}
-      <div className="absolute inset-0 scanline-overlay pointer-events-none opacity-40" />
-
-      {/* Top Left Badge - Live Pit Weather Status */}
-      <div className="absolute top-4 left-4 z-10 flex items-center gap-3 bg-slate-950/85 backdrop-blur-xl px-4 py-2 rounded-2xl border border-slate-700/80 shadow-xl">
-        <div className="w-3 h-3 rounded-full bg-amber-400 animate-ping" />
-        <div className="font-mono">
-          <div className="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-1.5">
-            <CloudFog className="w-4 h-4 text-amber-400" />
-            <span>KORBA OPEN-CAST PIT 4B // ZERO-VISIBILITY FOG</span>
-          </div>
-          <div className="text-[10px] text-slate-400 mt-0.5">
-            Heavy Dust & Fog Density: <span className="text-amber-400 font-bold">{fogDensity}%</span> | CAT 797F Fleet Operational
-          </div>
+        {/* Live Status Pill */}
+        <div className="hidden xs:flex items-center gap-2 bg-slate-950/90 px-3 py-1.5 rounded-full border border-emerald-500/40 font-mono text-[11px] text-emerald-400">
+          <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+          <span>24GHz RADAR: PENETRATING FOG</span>
         </div>
       </div>
 
-      {/* Top Right Fog Control Slider Pill */}
-      <div className="absolute top-4 right-4 z-10 hidden sm:flex items-center gap-3 bg-slate-950/85 backdrop-blur-xl px-4 py-2 rounded-2xl border border-slate-800 font-mono text-xs shadow-xl">
-        <Sliders className="w-4 h-4 text-cyan-400" />
-        <span className="text-slate-400 font-semibold">SIMULATE FOG:</span>
-        <input
-          type="range"
-          min="10"
-          max="100"
-          value={fogDensity}
-          onChange={e => setFogDensity(parseInt(e.target.value))}
-          className="w-24 h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-amber-400"
-        />
-        <span className="text-amber-400 font-extrabold w-8 text-right">{fogDensity}%</span>
-      </div>
+      {/* Center Display Area */}
+      {activeTab === 'RADAR_FOG' ? (
+        <div className="relative flex-1 w-full my-2 rounded-2xl overflow-hidden border border-slate-800">
+          <canvas ref={canvasRef} className="absolute inset-0 w-full h-full" />
+          <div className="absolute inset-0 scanline-overlay pointer-events-none opacity-30" />
 
-      {/* Bottom Floating Legend Bar */}
-      <div className="absolute bottom-4 left-4 right-4 z-10 flex flex-wrap items-center justify-between gap-3 bg-slate-950/85 backdrop-blur-xl px-4 py-3 rounded-2xl border border-slate-800 font-mono text-xs shadow-2xl">
-        <div className="flex items-center gap-4">
-          <div className="flex items-center gap-2">
-            <span className="w-3 h-3 rounded bg-amber-400 inline-block shadow-[0_0_10px_rgba(255,184,0,0.8)]" />
-            <span className="text-slate-200 font-bold">CAT 797F #402 (MOVING)</span>
-          </div>
-          <div className="hidden xs:flex items-center gap-2">
-            <span className="w-3 h-3 rounded bg-cyan-400 inline-block shadow-[0_0_10px_rgba(0,240,255,0.8)]" />
-            <span className="text-slate-200 font-bold">KOMATSU 400T (HAULING)</span>
+          {/* Emergency Brake Trigger Overlay Banner */}
+          {isBrakeTriggered && (
+            <div className="absolute inset-0 bg-red-600/20 backdrop-blur-xs flex flex-col items-center justify-center pointer-events-none animate-pulse z-30 font-mono text-center p-4">
+              <ShieldAlert className="w-12 h-12 text-red-500 animate-bounce mb-2" />
+              <div className="text-xl font-black text-white bg-red-600 px-4 py-1 rounded-xl shadow-2xl">
+                EMESRT LEVEL 9 AUTOMATIC BRAKE ENGAGED
+              </div>
+              <div className="text-xs text-red-300 font-bold mt-2">
+                CRITICAL COLLISION PROXIMITY BREACHED (ZONE 1 RED)
+              </div>
+            </div>
+          )}
+
+          {/* Fog Density Slider HUD Bar (Floating Bottom of Canvas) */}
+          <div className="absolute bottom-3 left-3 right-3 z-20 flex flex-wrap items-center justify-between gap-2 bg-slate-950/85 backdrop-blur-md px-3.5 py-2 rounded-2xl border border-slate-800 font-mono text-xs shadow-2xl">
+            <div className="flex items-center gap-2 text-slate-300">
+              <CloudFog className="w-4 h-4 text-amber-400 animate-pulse" />
+              <span className="text-[11px]">PIT FOG DENSITY:</span>
+              <span className="text-amber-400 font-extrabold">{fogDensity}%</span>
+            </div>
+            <input
+              type="range"
+              min="0"
+              max="100"
+              step="5"
+              value={fogDensity}
+              onChange={e => setFogDensity(parseInt(e.target.value))}
+              className="w-28 sm:w-36 h-2 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-amber-400"
+            />
           </div>
         </div>
+      ) : (
+        /* LIVE TELEMETRY MATRIX TAB */
+        <div className="flex-1 my-2 p-4 rounded-2xl bg-slate-950/90 border border-slate-800 font-mono text-xs flex flex-col justify-between space-y-3">
+          <div className="flex items-center justify-between pb-2 border-b border-slate-800">
+            <span className="font-bold text-cyan-400 flex items-center gap-2">
+              <Activity className="w-4 h-4 text-cyan-400" />
+              CAN-BUS REAL-TIME SAFETY STREAM
+            </span>
+            <span className="text-[10px] text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/30">
+              ISO 21815 COMPLIANT
+            </span>
+          </div>
 
-        <div className="flex items-center gap-2 text-cyan-400 font-bold">
-          <Sparkles className="w-4 h-4 animate-spin-slow" />
-          <span className="tracking-wider uppercase">24GHz mmWave Headlight Radar Beam Active</span>
+          <div className="grid grid-cols-2 gap-2 text-[11px]">
+            <div className="bg-slate-900/80 p-2.5 rounded-xl border border-slate-800">
+              <div className="text-slate-500">RADAR FREQUENCY:</div>
+              <div className="text-cyan-300 font-bold">24.150 GHz (mmWave)</div>
+            </div>
+            <div className="bg-slate-900/80 p-2.5 rounded-xl border border-slate-800">
+              <div className="text-slate-500">PROXIMITY SCAN RANGE:</div>
+              <div className="text-cyan-300 font-bold">360° (Forward & Rear)</div>
+            </div>
+            <div className="bg-slate-900/80 p-2.5 rounded-xl border border-slate-800">
+              <div className="text-slate-500">EMESRT INTERVENTION:</div>
+              <div className="text-emerald-400 font-bold">LEVEL 9 AUTOMATIC</div>
+            </div>
+            <div className="bg-slate-900/80 p-2.5 rounded-xl border border-slate-800">
+              <div className="text-slate-500">HAUL FLEET LATENCY:</div>
+              <div className="text-amber-300 font-bold">12 ms CAN-Bus</div>
+            </div>
+          </div>
+
+          <div className="bg-slate-900 p-3 rounded-xl border border-slate-800 text-[10px] space-y-1 text-slate-300">
+            <div className="flex justify-between text-slate-400">
+              <span>ACTIVE FLEET VEHICLES:</span>
+              <span className="text-white font-bold">CAT 797F #402 & KOMATSU 400T</span>
+            </div>
+            <div className="flex justify-between text-slate-400">
+              <span>MINE SECTOR:</span>
+              <span className="text-cyan-400 font-bold">KORBA COAL PIT SECTOR 4B</span>
+            </div>
+          </div>
         </div>
+      )}
+
+      {/* Bottom Interactive Sound & Demo Controls Bar */}
+      <div className="z-20 flex flex-wrap items-center justify-between gap-2 font-mono text-xs pt-1">
+        <div className="flex items-center gap-2">
+          <button
+            onClick={handleBrakeTest}
+            className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-red-500/20 hover:bg-red-500/30 border border-red-500/60 text-red-300 font-bold transition-all hover:scale-105 active:scale-95 text-[11px]"
+            title="Test EMESRT Level 9 Brake Intervention"
+          >
+            <ShieldAlert className="w-3.5 h-3.5 text-red-400" />
+            <span>BRAKE TEST</span>
+          </button>
+
+          <button
+            onClick={handleHornDemo}
+            className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/40 text-amber-300 font-bold transition-all hover:scale-105 active:scale-95 text-[11px]"
+            title="Sound V16 Air Horn"
+          >
+            <Volume2 className="w-3.5 h-3.5 text-amber-400" />
+            <span>AIR HORN</span>
+          </button>
+        </div>
+
+        {/* 1-Click Guest Operator Launch */}
+        <button
+          onClick={handleGuestLaunch}
+          className="flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-cyan-400 to-blue-500 text-slate-950 font-orbitron font-extrabold text-[11px] shadow-lg shadow-cyan-500/30 border border-cyan-200 transition-all hover:scale-105 active:scale-95"
+        >
+          <Play className="w-3.5 h-3.5 fill-slate-950" />
+          <span>TRY LIVE CABIN DEMO</span>
+        </button>
       </div>
     </div>
   );

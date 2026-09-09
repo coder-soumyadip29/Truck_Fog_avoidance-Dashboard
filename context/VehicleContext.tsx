@@ -60,6 +60,7 @@ export interface PitHazard {
 export type CameraMode = 'ORBIT' | 'COCKPIT' | 'TOP_DOWN' | 'REAR';
 export type WeatherCondition = 'FOG' | 'DUST_STORM' | 'NIGHT_CLEAR' | 'HEAVY_RAIN';
 export type RoadsideScenario = 'CLEAR' | 'ROADSIDE_BREAKDOWN' | 'ONCOMING_HAULER' | 'ROCKFALL_OBSTACLE' | 'PIT_WORKER';
+export type FatigueState = 'ALERT' | 'DROWSY' | 'CRITICAL_FATIGUE';
 
 export interface VehicleContextType {
   user: UserProfile;
@@ -83,10 +84,16 @@ export interface VehicleContextType {
   isMuted: boolean;
   radarMode: 'DUAL' | 'FORWARD' | 'REAR';
   
-  // New Camera, Weather & Roadside Simulation States
+  // Camera, Weather & Roadside Simulation States
   cameraMode: CameraMode;
   weatherCondition: WeatherCondition;
   roadsideScenario: RoadsideScenario;
+  
+  // Advanced Interactive Features (Wipers, LiDAR Heatmap, Driver Fatigue AI, Tele-Op)
+  wipersActive: boolean;
+  lidarHeatmapMode: boolean;
+  fatigueState: FatigueState;
+  teleOpActive: boolean;
   
   // Fleet GPS & Hazard Tracking
   nearbyVehicles: NearbyVehicle[];
@@ -115,6 +122,11 @@ export interface VehicleContextType {
   setCameraMode: (mode: CameraMode) => void;
   setWeatherCondition: (weather: WeatherCondition) => void;
   setRoadsideScenario: (scenario: RoadsideScenario) => void;
+  toggleWipers: () => void;
+  toggleLidarHeatmap: () => void;
+  triggerFatigueSimulation: () => void;
+  resetFatigue: () => void;
+  toggleTeleOp: () => void;
   setFocusVehicleId: (id: string | null) => void;
   applyPreset: (preset: 'FOG_HAZARD' | 'RESET_ROUTE' | 'ENGINE_FAULT' | 'AUTO_BRAKE' | 'ROADSIDE_BREAKDOWN' | 'ONCOMING_HAULER' | 'ROCKFALL_OBSTACLE' | 'PIT_WORKER') => void;
   toggleSimPanel: () => void;
@@ -146,6 +158,13 @@ export const VehicleProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const [cameraMode, setCameraMode] = useState<CameraMode>('ORBIT');
   const [weatherCondition, setWeatherCondition] = useState<WeatherCondition>('FOG');
   const [roadsideScenario, setRoadsideScenario] = useState<RoadsideScenario>('CLEAR');
+
+  // New Interactive Feature States
+  const [wipersActive, setWipersActive] = useState<boolean>(false);
+  const [lidarHeatmapMode, setLidarHeatmapMode] = useState<boolean>(false);
+  const [fatigueState, setFatigueState] = useState<FatigueState>('ALERT');
+  const [teleOpActive, setTeleOpActive] = useState<boolean>(false);
+
   const [rpm, setRpm] = useState<number>(0);
   const [fogVisibility, setFogVisibility] = useState<number>(45); // %
   const [steeringAngle, setSteeringAngle] = useState<number>(0); // deg
@@ -230,7 +249,16 @@ export const VehicleProvider: React.FC<{ children: React.ReactNode }> = ({ child
     // Continuously update realistic V16 diesel engine pitch, turbo whine & air brakes
     audioSynth.updateEngineSound(speed, rpm, activeInputs.up, activeInputs.down, gear);
 
-    if (threatZone === 'ZONE_1_EMERGENCY') {
+    // Oncoming Hauler Collision Avoidance & Level 9 Auto Brake Logic
+    if (roadsideScenario === 'ONCOMING_HAULER' && distance <= 5.0) {
+      if (speed > 0) {
+        const timer = setTimeout(() => {
+          setSpeed(prev => Math.max(0, parseFloat((prev - 10).toFixed(1))));
+          setDistance(1.8); // Bring vehicle to safe stop before impact
+        }, 200);
+        return () => clearTimeout(timer);
+      }
+    } else if (threatZone === 'ZONE_1_EMERGENCY') {
       audioSynth.playEmergencyAlarm();
       // Level 9 Automatic Brake Intervention
       if (speed > 0) {
@@ -462,6 +490,41 @@ export const VehicleProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
   const nearestHazard = pitHazards.reduce((prev, curr) => (curr.distance < prev.distance ? curr : prev), pitHazards[0]);
 
+  const toggleWipers = () => {
+    setWipersActive(prev => {
+      const next = !prev;
+      addDiagnosticLog(`Cockpit Windshield Wipers: ${next ? 'ACTIVE (Pneumatic Sweep)' : 'OFF'}`, 'info');
+      return next;
+    });
+  };
+
+  const toggleLidarHeatmap = () => {
+    setLidarHeatmapMode(prev => {
+      const next = !prev;
+      addDiagnosticLog(`24GHz LiDAR Point-Cloud Heatmap: ${next ? 'ENGAGED' : 'OFF'}`, 'info');
+      return next;
+    });
+  };
+
+  const triggerFatigueSimulation = () => {
+    setFatigueState('CRITICAL_FATIGUE');
+    audioSynth.playEmergencyAlarm();
+    addDiagnosticLog('AI DRIVER MONITOR: Eye-Closure Micro-Sleep Detected! Actuating Cabin Wake-up Alarm.', 'critical');
+  };
+
+  const resetFatigue = () => {
+    setFatigueState('ALERT');
+    addDiagnosticLog('AI Driver Monitor: Operator Alertness Restored (98% ALERT).', 'info');
+  };
+
+  const toggleTeleOp = () => {
+    setTeleOpActive(prev => {
+      const next = !prev;
+      addDiagnosticLog(`5G Pit Network Remote Tele-Op Override: ${next ? 'ENGAGED' : 'DISENGAGED'}`, next ? 'warn' : 'info');
+      return next;
+    });
+  };
+
   const toggleSimPanel = () => setIsSimPanelOpen(prev => !prev);
   const toggleMute = () => {
     const muted = audioSynth.toggleMute();
@@ -494,6 +557,10 @@ export const VehicleProvider: React.FC<{ children: React.ReactNode }> = ({ child
         cameraMode,
         weatherCondition,
         roadsideScenario,
+        wipersActive,
+        lidarHeatmapMode,
+        fatigueState,
+        teleOpActive,
         activeInputs,
         nearbyVehicles,
         nearestVehicle,
@@ -517,6 +584,11 @@ export const VehicleProvider: React.FC<{ children: React.ReactNode }> = ({ child
         setCameraMode,
         setWeatherCondition,
         setRoadsideScenario,
+        toggleWipers,
+        toggleLidarHeatmap,
+        triggerFatigueSimulation,
+        resetFatigue,
+        toggleTeleOp,
         setFocusVehicleId,
         applyPreset,
         toggleSimPanel,

@@ -178,3 +178,15 @@ body {
   border-right: 2px solid #00F0FF;
   pointer-events: none;
 }
+
+/* Pneumatic Heavy Wiper Blade Sweep Keyframes */
+@keyframes wiperSweep {
+  0% { transform: rotate(-55deg); }
+  50% { transform: rotate(55deg); }
+  100% { transform: rotate(-55deg); }
+}
+
+.animate-wiper-sweep {
+  animation: wiperSweep 1.8s ease-in-out infinite;
+}
+

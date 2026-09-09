@@ -198,8 +198,8 @@ class AudioSynthesizer {
     this.turboOsc.frequency.setTargetAtTime(turboFreq, now, 0.15);
     this.turboGain.gain.setTargetAtTime(turboVol, now, 0.15);
 
-    // Air Brake Hiss Trigger when decelerating/braking
-    if (isBraking && now - this.lastBrakeTime > 2.5) {
+    // Air Brake Soft Release Trigger when decelerating from speed
+    if (isBraking && speed > 5 && now - this.lastBrakeTime > 4.0) {
       this.playAirBrakeHiss();
       this.lastBrakeTime = now;
     }
@@ -234,39 +234,38 @@ class AudioSynthesizer {
     }
   }
 
-  // 5. Pneumatic Air Brake Hiss Sound (White Noise Pressure Discharge)
+  // 5. Pneumatic Air Brake Soft Release Sound (Subtle Lowpass Discharge)
   public playAirBrakeHiss() {
     if (this.isMuted) return;
     this.initCtx();
     if (!this.ctx) return;
 
     const now = this.ctx.currentTime;
-    const bufferSize = this.ctx.sampleRate * 0.4;
+    const bufferSize = Math.floor(this.ctx.sampleRate * 0.25);
     const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
     const output = buffer.getChannelData(0);
     for (let i = 0; i < bufferSize; i++) {
-      output[i] = Math.random() * 2 - 1;
+      output[i] = (Math.random() * 2 - 1) * 0.2; // Soft noise level
     }
 
     const whiteNoise = this.ctx.createBufferSource();
     whiteNoise.buffer = buffer;
 
     const filter = this.ctx.createBiquadFilter();
-    filter.type = 'bandpass';
-    filter.frequency.setValueAtTime(3200, now);
-    filter.frequency.exponentialRampToValueAtTime(800, now + 0.35);
-    filter.Q.setValueAtTime(2.0, now);
+    filter.type = 'lowpass';
+    filter.frequency.setValueAtTime(650, now);
+    filter.frequency.exponentialRampToValueAtTime(250, now + 0.22);
 
     const gain = this.ctx.createGain();
-    gain.gain.setValueAtTime(0.25, now);
-    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.38);
+    gain.gain.setValueAtTime(0.035, now); // Soft & non-disturbing volume
+    gain.gain.linearRampToValueAtTime(0.001, now + 0.24);
 
     whiteNoise.connect(filter);
     filter.connect(gain);
     gain.connect(this.ctx.destination);
 
     whiteNoise.start(now);
-    whiteNoise.stop(now + 0.4);
+    whiteNoise.stop(now + 0.25);
   }
 
   // 6. Heavy Mining Truck Air Horn Sound

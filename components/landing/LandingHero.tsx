@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useVehicle } from '../../context/VehicleContext';
 import { GoogleAuthModal } from './GoogleAuthModal';
 import { ComplianceSection } from './ComplianceSection';
 import { FogMiningScene } from './FogMiningScene';
@@ -8,6 +9,15 @@ import { Shield, Radio, Activity, ArrowRight, Zap, CheckCircle2, CloudFog, Spark
 
 export const LandingHero: React.FC = () => {
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const { loginWithGoogle } = useVehicle();
+
+  useEffect(() => {
+    const handleGuest = () => {
+      loginWithGoogle('Chief Safety Engineer', 'Guest Operator', 'guest@aegismine.dgms.gov.in');
+    };
+    window.addEventListener('guest-login', handleGuest);
+    return () => window.removeEventListener('guest-login', handleGuest);
+  }, [loginWithGoogle]);
 
   return (
     <div className="min-h-screen bg-[#030712] text-slate-100 relative overflow-hidden bg-hex-pattern">
@@ -81,15 +91,36 @@ export const LandingHero: React.FC = () => {
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 pt-3">
               <button
                 onClick={() => setIsAuthModalOpen(true)}
-                className="flex items-center justify-center gap-3 px-8 py-4 rounded-2xl bg-cyan-400 hover:bg-cyan-300 text-slate-950 font-orbitron font-black text-sm shadow-[0_0_40px_rgba(0,240,255,0.5)] transition-all hover:scale-105 active:scale-95 border border-cyan-100"
+                className="flex items-center justify-center gap-3 px-8 py-4 rounded-2xl bg-gradient-to-r from-cyan-400 via-blue-400 to-amber-300 hover:from-cyan-300 hover:to-amber-200 text-slate-950 font-orbitron font-black text-sm shadow-[0_0_40px_rgba(0,240,255,0.5)] transition-all hover:scale-105 active:scale-95 border border-cyan-100"
               >
-                <span>ENTER MINING CABIN</span>
+                <span>OPERATOR LOGIN</span>
                 <ArrowRight className="w-5 h-5" />
               </button>
 
-              <div className="flex items-center justify-center gap-2.5 px-5 py-3.5 rounded-2xl glass-panel text-slate-200 font-mono text-xs border border-slate-700">
-                <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-                <span>DGMS APPROVED SAFETY SYSTEM</span>
+              <button
+                onClick={() => {
+                  window.dispatchEvent(new CustomEvent('guest-login'));
+                }}
+                className="flex items-center justify-center gap-2.5 px-6 py-4 rounded-2xl glass-panel-accent text-cyan-300 font-orbitron font-extrabold text-xs border border-cyan-400/50 hover:bg-cyan-500/20 transition-all hover:scale-105 active:scale-95 shadow-lg shadow-cyan-500/20"
+              >
+                <Zap className="w-4 h-4 text-cyan-400 animate-pulse" />
+                <span>TRY LIVE CABIN NOW</span>
+              </button>
+            </div>
+
+            {/* Feature Badges Pill */}
+            <div className="flex flex-wrap items-center gap-2 pt-2 text-[11px] font-mono text-slate-300">
+              <div className="flex items-center gap-1.5 px-3 py-1 rounded-xl bg-slate-900/80 border border-slate-800">
+                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+                <span>EMESRT Level 9 Auto-Brake</span>
+              </div>
+              <div className="flex items-center gap-1.5 px-3 py-1 rounded-xl bg-slate-900/80 border border-slate-800">
+                <Radio className="w-3.5 h-3.5 text-cyan-400" />
+                <span>24GHz mmWave LiDAR Matrix</span>
+              </div>
+              <div className="flex items-center gap-1.5 px-3 py-1 rounded-xl bg-slate-900/80 border border-slate-800">
+                <Eye className="w-3.5 h-3.5 text-amber-400" />
+                <span>AI Driver Fatigue Monitoring</span>
               </div>
             </div>
 

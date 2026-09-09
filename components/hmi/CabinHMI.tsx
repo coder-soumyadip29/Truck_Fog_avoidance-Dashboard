@@ -29,6 +29,16 @@ export const CabinHMI: React.FC = () => {
     nearestVehicle,
     nearestHazard,
     addDiagnosticLog,
+    wipersActive,
+    toggleWipers,
+    lidarHeatmapMode,
+    toggleLidarHeatmap,
+    fatigueState,
+    triggerFatigueSimulation,
+    resetFatigue,
+    teleOpActive,
+    toggleTeleOp,
+    roadsideScenario,
   } = useVehicle();
 
   const [hmiTab, setHmiTab] = useState<'RADAR_ARC' | 'PIT_MAP'>('RADAR_ARC');
@@ -46,11 +56,12 @@ export const CabinHMI: React.FC = () => {
         emesrtLevel={emesrtLevel}
         distance={distance}
         speed={speed}
+        roadsideScenario={roadsideScenario}
       />
 
-      {/* View Switcher Bar */}
+      {/* View Switcher & Interactive Actions Bar */}
       <div className="flex flex-wrap items-center justify-between gap-2 px-1 font-mono text-xs">
-        <div className="flex items-center gap-2 bg-slate-950/80 p-1 rounded-xl border border-slate-800">
+        <div className="flex flex-wrap items-center gap-2 bg-slate-950/80 p-1 rounded-xl border border-slate-800">
           <button
             onClick={() => setHmiTab('RADAR_ARC')}
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all font-bold ${
@@ -75,7 +86,70 @@ export const CabinHMI: React.FC = () => {
           </button>
         </div>
 
-        <div className="flex items-center gap-2">
+        {/* Interactive Features Quick Action Bar */}
+        <div className="flex flex-wrap items-center gap-1.5">
+          {/* WIPERS TOGGLE */}
+          <button
+            onClick={() => {
+              toggleWipers();
+              audioSynth.playAirBrakeHiss();
+            }}
+            className={`px-2.5 py-1.5 rounded-xl text-[11px] font-bold border transition-all ${
+              wipersActive
+                ? 'bg-amber-500/20 text-amber-300 border-amber-400 animate-pulse'
+                : 'bg-slate-900/80 text-slate-400 border-slate-800 hover:text-white'
+            }`}
+            title="Toggle Pneumatic Windshield Wipers"
+          >
+            🌧️ WIPERS {wipersActive ? 'ON' : 'OFF'}
+          </button>
+
+          {/* 3D LIDAR SCAN TOGGLE */}
+          <button
+            onClick={toggleLidarHeatmap}
+            className={`px-2.5 py-1.5 rounded-xl text-[11px] font-bold border transition-all ${
+              lidarHeatmapMode
+                ? 'bg-cyan-500/20 text-cyan-300 border-cyan-400 animate-pulse'
+                : 'bg-slate-900/80 text-slate-400 border-slate-800 hover:text-white'
+            }`}
+            title="Toggle 24GHz LiDAR Laser Scan Heatmap"
+          >
+            📡 LIDAR {lidarHeatmapMode ? 'ON' : 'OFF'}
+          </button>
+
+          {/* AI DRIVER FATIGUE TRIGGER */}
+          <button
+            onClick={() => {
+              if (fatigueState === 'NORMAL') {
+                triggerFatigueSimulation();
+                audioSynth.playTruckHorn();
+              } else {
+                resetFatigue();
+              }
+            }}
+            className={`px-2.5 py-1.5 rounded-xl text-[11px] font-bold border transition-all ${
+              fatigueState !== 'NORMAL'
+                ? 'bg-red-500/20 text-red-400 border-red-500 animate-bounce'
+                : 'bg-slate-900/80 text-slate-400 border-slate-800 hover:text-white'
+            }`}
+            title="Simulate AI Driver Fatigue Eye-Blink Alert"
+          >
+            👁️ FATIGUE {fatigueState !== 'NORMAL' ? 'ALARM!' : 'TEST'}
+          </button>
+
+          {/* 5G TELE-OP OVERRIDE TOGGLE */}
+          <button
+            onClick={toggleTeleOp}
+            className={`px-2.5 py-1.5 rounded-xl text-[11px] font-bold border transition-all ${
+              teleOpActive
+                ? 'bg-emerald-500/20 text-emerald-300 border-emerald-400 shadow-md shadow-emerald-500/30'
+                : 'bg-slate-900/80 text-slate-400 border-slate-800 hover:text-white'
+            }`}
+            title="Toggle 5G Remote Control Override"
+          >
+            🛰️ 5G TELE-OP
+          </button>
+
           {/* AIR HORN HMI Button */}
           <button
             onClick={handleAirHorn}
@@ -85,14 +159,6 @@ export const CabinHMI: React.FC = () => {
             <Volume2 className="w-3.5 h-3.5 text-amber-400" />
             <span>AIR HORN</span>
           </button>
-
-          {/* Nearest Truck Live Proximity Pill */}
-          <div className="hidden sm:flex items-center gap-2 bg-slate-900/80 px-3 py-1.5 rounded-xl border border-slate-800 font-mono text-[11px]">
-            <Truck className="w-3.5 h-3.5 text-cyan-400 shrink-0 animate-pulse" />
-            <span className="text-slate-400">NEAREST:</span>
-            <span className="font-bold text-white">{nearestVehicle.name.split(' ')[0]} {nearestVehicle.name.split(' ').pop()}</span>
-            <span className="text-cyan-300 font-bold">({nearestVehicle.distance.toFixed(1)}m)</span>
-          </div>
         </div>
       </div>
 

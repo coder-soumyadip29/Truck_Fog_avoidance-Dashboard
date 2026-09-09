@@ -55,6 +55,15 @@ export const DigitalTwinCanvas: React.FC = () => {
     cameraMode,
     setCameraMode,
     roadsideScenario,
+    wipersActive,
+    toggleWipers,
+    lidarHeatmapMode,
+    toggleLidarHeatmap,
+    fatigueState,
+    triggerFatigueSimulation,
+    resetFatigue,
+    teleOpActive,
+    toggleTeleOp,
   } = useVehicle();
 
   const handleTouch = (dir: 'up' | 'down' | 'left' | 'right', active: boolean) => {
@@ -92,8 +101,8 @@ export const DigitalTwinCanvas: React.FC = () => {
           </span>
         </div>
 
-        {/* Camera View Switcher Buttons */}
-        <div className="flex items-center gap-1 bg-slate-950/90 backdrop-blur-md p-1 rounded-xl border border-slate-800 pointer-events-auto font-mono text-[10px]">
+        {/* Camera View Switcher & Interactive Feature Buttons */}
+        <div className="flex flex-wrap items-center gap-1 bg-slate-950/90 backdrop-blur-md p-1 rounded-xl border border-slate-800 pointer-events-auto font-mono text-[10px]">
           <button
             onClick={() => setCameraMode('ORBIT')}
             className={`px-2 py-1 rounded-lg transition-all ${cameraMode === 'ORBIT' ? 'bg-cyan-500 text-slate-950 font-bold' : 'text-slate-400 hover:text-white'}`}
@@ -112,10 +121,50 @@ export const DigitalTwinCanvas: React.FC = () => {
           >
             DRONE TOP
           </button>
+
+          {/* Interactive Feature Controls */}
+          <div className="h-4 w-px bg-slate-800 mx-0.5" />
+
+          <button
+            onClick={toggleLidarHeatmap}
+            className={`px-2 py-1 rounded-lg transition-all border ${
+              lidarHeatmapMode
+                ? 'bg-cyan-500/20 text-cyan-300 border-cyan-400 font-bold animate-pulse'
+                : 'bg-slate-900/60 text-slate-400 border-slate-700 hover:text-white'
+            }`}
+            title="Toggle 24GHz LiDAR Laser Matrix"
+          >
+            📡 LIDAR {lidarHeatmapMode ? 'ON' : 'OFF'}
+          </button>
+
+          <button
+            onClick={toggleWipers}
+            className={`px-2 py-1 rounded-lg transition-all border ${
+              wipersActive
+                ? 'bg-amber-500/20 text-amber-300 border-amber-400 font-bold'
+                : 'bg-slate-900/60 text-slate-400 border-slate-700 hover:text-white'
+            }`}
+            title="Toggle Heavy Duty Windshield Wipers"
+          >
+            🌧️ WIPERS {wipersActive ? 'ON' : 'OFF'}
+          </button>
+
+          <button
+            onClick={toggleTeleOp}
+            className={`px-2 py-1 rounded-lg transition-all border ${
+              teleOpActive
+                ? 'bg-emerald-500/20 text-emerald-300 border-emerald-400 font-bold shadow-lg shadow-emerald-500/20'
+                : 'bg-slate-900/60 text-slate-400 border-slate-700 hover:text-white'
+            }`}
+            title="Toggle 5G Remote Tele-Operation Override"
+          >
+            🛰️ 5G TELE-OP
+          </button>
+
           <button
             onClick={() => setSelectedHealthNode(null)}
             className="p-1 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-700 text-cyan-400 ml-1"
-            title="Reset Camera"
+            title="Reset Camera View"
           >
             <RefreshCw className="w-3 h-3" />
           </button>
@@ -141,6 +190,14 @@ export const DigitalTwinCanvas: React.FC = () => {
           </span>
         </div>
       </div>
+
+      {/* --- ONCOMING TRUCK COLLISION RISK RED ALERT BANNER --- */}
+      {roadsideScenario === 'ONCOMING_HAULER' && (
+        <div className="absolute top-24 left-1/2 -translate-x-1/2 z-30 pointer-events-none font-mono text-xs bg-red-600/90 text-white font-extrabold px-4 py-2 rounded-2xl shadow-[0_0_35px_rgba(239,68,68,0.8)] border border-red-300 animate-pulse flex items-center gap-2 max-w-[90%] text-center">
+          <ShieldCheck className="w-5 h-5 text-emerald-300 shrink-0" />
+          <span>🚨 RED ALERT: ONCOMING KOMATSU HAULER IN OPPOSITE LANE // LEVEL 9 AUTO-BRAKE PREVENTING ACCIDENT!</span>
+        </div>
+      )}
 
       {/* ========================================================================= */}
       {/* --- CABIN 1ST PERSON DRIVER WINDSHIELD & HUD OVERLAY LAYER --- */}
@@ -183,6 +240,24 @@ export const DigitalTwinCanvas: React.FC = () => {
             </div>
           </div>
 
+          {/* --- INTERACTIVE WINDSHIELD WIPER ANIMATION OVERLAY --- */}
+          {wipersActive && (
+            <div className="absolute inset-0 pointer-events-none z-20 overflow-hidden">
+              {/* Dual Pneumatic Wiper Arm 1 (Driver Side) */}
+              <div
+                className="absolute bottom-0 left-[20%] w-3.5 h-[320px] bg-gradient-to-t from-slate-900 via-slate-800 to-slate-900 border-x border-slate-700 rounded-t-full origin-bottom animate-wiper-sweep"
+                style={{ transformOrigin: 'bottom center' }}
+              />
+              {/* Dual Pneumatic Wiper Arm 2 (Passenger Side) */}
+              <div
+                className="absolute bottom-0 left-[60%] w-3.5 h-[320px] bg-gradient-to-t from-slate-900 via-slate-800 to-slate-900 border-x border-slate-700 rounded-t-full origin-bottom animate-wiper-sweep"
+                style={{ transformOrigin: 'bottom center', animationDelay: '0.15s' }}
+              />
+              {/* Water/Mist Clearing Streak FX */}
+              <div className="absolute inset-0 bg-gradient-to-tr from-cyan-500/5 via-transparent to-amber-500/5 animate-pulse" />
+            </div>
+          )}
+
           {/* 3. Bottom Dashboard Steering Wheel Rim & Telemetry Console */}
           <div className="absolute bottom-0 left-0 right-0 h-28 sm:h-36 bg-gradient-to-t from-slate-950 via-slate-950/90 to-transparent flex items-end justify-between px-4 sm:px-8 pb-3">
             {/* Rotating 4-Spoke Heavy Mining Steering Wheel (Bottom Left) */}
@@ -215,6 +290,68 @@ export const DigitalTwinCanvas: React.FC = () => {
                 <div className="text-amber-300 font-bold">STEER: {steeringAngle}°</div>
               </div>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* --- 5G REMOTE TELE-OPERATION OVERRIDE HUD CARD --- */}
+      {teleOpActive && (
+        <div className="absolute top-16 left-4 z-30 font-mono text-xs bg-slate-950/90 backdrop-blur-xl border border-emerald-500/60 p-3 rounded-2xl shadow-[0_0_30px_rgba(16,185,129,0.3)] animate-fade-in flex flex-col gap-2 max-w-[260px]">
+          <div className="flex items-center justify-between">
+            <span className="flex items-center gap-1.5 font-black text-emerald-400 uppercase text-[11px]">
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
+              5G TELE-OP REMOTE OVERRIDE
+            </span>
+            <button
+              onClick={toggleTeleOp}
+              className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 hover:bg-emerald-500/40"
+            >
+              DISENGAGE
+            </button>
+          </div>
+          <div className="grid grid-cols-2 gap-2 text-[10px] text-slate-300 bg-slate-900/80 p-2 rounded-xl">
+            <div>
+              <div className="text-slate-500">5G URLLC PING:</div>
+              <div className="text-emerald-400 font-bold">5.8 ms (100Gbps)</div>
+            </div>
+            <div>
+              <div className="text-slate-500">REMOTE PILOT:</div>
+              <div className="text-cyan-300 font-bold">HQ-UNIT-04</div>
+            </div>
+          </div>
+          <div className="text-[9px] text-slate-400">
+            Manual remote steering joystick connected over private 5G mining slice.
+          </div>
+        </div>
+      )}
+
+      {/* --- AI DRIVER FATIGUE MONITORING WARNING MODAL --- */}
+      {fatigueState !== 'NORMAL' && (
+        <div className="absolute top-16 right-4 z-30 font-mono text-xs bg-slate-950/95 backdrop-blur-xl border border-red-500 p-3.5 rounded-2xl shadow-[0_0_35px_rgba(239,68,68,0.5)] animate-bounce-slow flex flex-col gap-2 max-w-[280px]">
+          <div className="flex items-center justify-between text-red-400 font-black text-[11px] uppercase">
+            <span className="flex items-center gap-1.5">
+              <span className="w-2.5 h-2.5 rounded-full bg-red-500 animate-ping" />
+              AI FATIGUE ALARM // {fatigueState}
+            </span>
+          </div>
+          <p className="text-[11px] text-slate-200 leading-tight">
+            Driver eye closure & head drop detected by cabin IR camera!
+          </p>
+          <div className="flex items-center justify-between gap-2 mt-1">
+            <button
+              onClick={() => {
+                audioSynth.playTruckHorn();
+              }}
+              className="flex-1 py-1.5 rounded-xl bg-amber-500/20 border border-amber-500/50 text-amber-300 font-bold text-[10px] hover:bg-amber-500/40"
+            >
+              🎺 WAKE HORN
+            </button>
+            <button
+              onClick={resetFatigue}
+              className="flex-1 py-1.5 rounded-xl bg-emerald-500/20 border border-emerald-500/50 text-emerald-300 font-bold text-[10px] hover:bg-emerald-500/40"
+            >
+              DISMISS / OK
+            </button>
           </div>
         </div>
       )}
@@ -289,6 +426,7 @@ export const DigitalTwinCanvas: React.FC = () => {
             engineActive={engineState === 'ACTIVE'}
             truckX={truckX}
             roadsideScenario={roadsideScenario}
+            lidarHeatmapMode={lidarHeatmapMode}
           />
 
           {/* Clickable 3D Health Hotspots */}

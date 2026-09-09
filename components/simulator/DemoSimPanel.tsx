@@ -23,6 +23,15 @@ export const DemoSimPanel: React.FC = () => {
     setSteeringAngle,
     applyPreset,
     toggleSimPanel,
+    wipersActive,
+    toggleWipers,
+    lidarHeatmapMode,
+    toggleLidarHeatmap,
+    fatigueState,
+    triggerFatigueSimulation,
+    resetFatigue,
+    teleOpActive,
+    toggleTeleOp,
   } = useVehicle();
 
   return (
@@ -82,19 +91,66 @@ export const DemoSimPanel: React.FC = () => {
             </span>
           </div>
 
-          {/* Quick Sound Actions */}
+          {/* Quick Sound Actions & Interactive Features */}
           <div className="mb-4 grid grid-cols-2 gap-2 font-mono text-xs">
             <button
               onClick={() => audioSynth.playTruckHorn()}
-              className="p-2 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/40 text-amber-300 font-bold flex items-center justify-center gap-1.5 transition-all active:scale-95"
+              className="p-2 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/40 text-amber-300 font-bold flex items-center justify-center gap-1.5 transition-all active:scale-95 text-[11px]"
             >
               🎺 DUAL AIR HORN
             </button>
             <button
               onClick={() => audioSynth.playAirBrakeHiss()}
-              className="p-2 rounded-xl bg-cyan-500/10 hover:bg-cyan-500/20 border border-cyan-500/40 text-cyan-300 font-bold flex items-center justify-center gap-1.5 transition-all active:scale-95"
+              className="p-2 rounded-xl bg-cyan-500/10 hover:bg-cyan-500/20 border border-cyan-500/40 text-cyan-300 font-bold flex items-center justify-center gap-1.5 transition-all active:scale-95 text-[11px]"
             >
               🌬️ AIR BRAKE HISS
+            </button>
+
+            <button
+              onClick={toggleLidarHeatmap}
+              className={`p-2 rounded-xl border font-bold flex items-center justify-center gap-1.5 transition-all active:scale-95 text-[11px] ${
+                lidarHeatmapMode
+                  ? 'bg-cyan-500/20 text-cyan-300 border-cyan-400 animate-pulse'
+                  : 'bg-slate-900 text-slate-400 border-slate-800 hover:text-white'
+              }`}
+            >
+              📡 3D LIDAR MATRIX
+            </button>
+
+            <button
+              onClick={toggleWipers}
+              className={`p-2 rounded-xl border font-bold flex items-center justify-center gap-1.5 transition-all active:scale-95 text-[11px] ${
+                wipersActive
+                  ? 'bg-amber-500/20 text-amber-300 border-amber-400'
+                  : 'bg-slate-900 text-slate-400 border-slate-800 hover:text-white'
+              }`}
+            >
+              🌧️ WINDSHIELD WIPERS
+            </button>
+
+            <button
+              onClick={() => {
+                if (fatigueState === 'NORMAL') triggerFatigueSimulation();
+                else resetFatigue();
+              }}
+              className={`p-2 rounded-xl border font-bold flex items-center justify-center gap-1.5 transition-all active:scale-95 text-[11px] ${
+                fatigueState !== 'NORMAL'
+                  ? 'bg-red-500/20 text-red-400 border-red-500 animate-bounce'
+                  : 'bg-slate-900 text-slate-400 border-slate-800 hover:text-white'
+              }`}
+            >
+              👁️ AI FATIGUE ALARM
+            </button>
+
+            <button
+              onClick={toggleTeleOp}
+              className={`p-2 rounded-xl border font-bold flex items-center justify-center gap-1.5 transition-all active:scale-95 text-[11px] ${
+                teleOpActive
+                  ? 'bg-emerald-500/20 text-emerald-300 border-emerald-400'
+                  : 'bg-slate-900 text-slate-400 border-slate-800 hover:text-white'
+              }`}
+            >
+              🛰️ 5G TELE-OP OVERRIDE
             </button>
           </div>
 

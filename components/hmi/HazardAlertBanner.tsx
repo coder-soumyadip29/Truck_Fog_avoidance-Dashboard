@@ -9,13 +9,36 @@ interface HazardAlertBannerProps {
   emesrtLevel: EMESRTLevel;
   distance: number;
   speed: number;
+  roadsideScenario?: string;
 }
 
 export const HazardAlertBanner: React.FC<HazardAlertBannerProps> = ({
   threatZone,
   distance,
   speed,
+  roadsideScenario = 'CLEAR',
 }) => {
+  if (roadsideScenario === 'ONCOMING_HAULER') {
+    return (
+      <div className="w-full glass-panel-danger px-4 py-3 rounded-xl flex items-center justify-between font-mono text-xs text-red-400 animate-pulse border-2 border-red-500 shadow-[0_0_30px_rgba(239,68,68,0.5)]">
+        <div className="flex items-center gap-2.5">
+          <ShieldAlert className="w-6 h-6 text-red-500 animate-bounce shrink-0" />
+          <div>
+            <div className="font-extrabold uppercase tracking-widest text-sm text-red-300 flex items-center gap-2">
+              <span>🚨 CRITICAL RED ALERT: ONCOMING HEAVY TRUCK IN OPPOSITE LANE</span>
+            </div>
+            <div className="text-[11px] text-emerald-300 font-bold mt-0.5">
+              EMESRT LEVEL 9 AUTO-BRAKE ENGAGED — ACCIDENT PREVENTED ({distance.toFixed(1)}m CLEARANCE)
+            </div>
+          </div>
+        </div>
+        <div className="px-3 py-1 bg-red-600 text-white rounded-lg font-bold text-xs tracking-wider animate-ping-slow shrink-0">
+          COLLISION AVERTED
+        </div>
+      </div>
+    );
+  }
+
   if (threatZone === 'ZONE_3_SAFE') {
     return (
       <div className="w-full glass-panel-safe px-4 py-2.5 rounded-xl flex items-center justify-between font-mono text-xs text-emerald-400">
