@@ -8,6 +8,8 @@ import { HazardAlertBanner } from './HazardAlertBanner';
 import { PitMap } from './PitMap';
 import { Terminal, Volume2, VolumeX, Radio, Map, Truck, ShieldAlert } from 'lucide-react';
 
+import { audioSynth } from '../../utils/audioSynth';
+
 export const CabinHMI: React.FC = () => {
   const {
     threatZone,
@@ -26,9 +28,15 @@ export const CabinHMI: React.FC = () => {
     toggleMute,
     nearestVehicle,
     nearestHazard,
+    addDiagnosticLog,
   } = useVehicle();
 
   const [hmiTab, setHmiTab] = useState<'RADAR_ARC' | 'PIT_MAP'>('RADAR_ARC');
+
+  const handleAirHorn = () => {
+    audioSynth.playTruckHorn();
+    addDiagnosticLog('DRIVER ACTUATED: Dual Air Horn Warning Bark.', 'info');
+  };
 
   return (
     <div className="flex flex-col gap-4 w-full h-full">
@@ -41,7 +49,7 @@ export const CabinHMI: React.FC = () => {
       />
 
       {/* View Switcher Bar */}
-      <div className="flex items-center justify-between gap-2 px-1 font-mono text-xs">
+      <div className="flex flex-wrap items-center justify-between gap-2 px-1 font-mono text-xs">
         <div className="flex items-center gap-2 bg-slate-950/80 p-1 rounded-xl border border-slate-800">
           <button
             onClick={() => setHmiTab('RADAR_ARC')}
@@ -67,12 +75,24 @@ export const CabinHMI: React.FC = () => {
           </button>
         </div>
 
-        {/* Nearest Truck Live Proximity Pill */}
-        <div className="hidden sm:flex items-center gap-2 bg-slate-900/80 px-3 py-1.5 rounded-xl border border-slate-800 font-mono text-[11px]">
-          <Truck className="w-3.5 h-3.5 text-cyan-400 shrink-0 animate-pulse" />
-          <span className="text-slate-400">NEAREST FLEET:</span>
-          <span className="font-bold text-white">{nearestVehicle.name.split(' ')[0]} {nearestVehicle.name.split(' ').pop()}</span>
-          <span className="text-cyan-300 font-bold">({nearestVehicle.distance.toFixed(1)}m)</span>
+        <div className="flex items-center gap-2">
+          {/* AIR HORN HMI Button */}
+          <button
+            onClick={handleAirHorn}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/40 text-amber-300 font-bold transition-all hover:scale-105 active:scale-95 text-[11px]"
+            title="Actuate Heavy Truck Air Horn"
+          >
+            <Volume2 className="w-3.5 h-3.5 text-amber-400" />
+            <span>AIR HORN</span>
+          </button>
+
+          {/* Nearest Truck Live Proximity Pill */}
+          <div className="hidden sm:flex items-center gap-2 bg-slate-900/80 px-3 py-1.5 rounded-xl border border-slate-800 font-mono text-[11px]">
+            <Truck className="w-3.5 h-3.5 text-cyan-400 shrink-0 animate-pulse" />
+            <span className="text-slate-400">NEAREST:</span>
+            <span className="font-bold text-white">{nearestVehicle.name.split(' ')[0]} {nearestVehicle.name.split(' ').pop()}</span>
+            <span className="text-cyan-300 font-bold">({nearestVehicle.distance.toFixed(1)}m)</span>
+          </div>
         </div>
       </div>
 

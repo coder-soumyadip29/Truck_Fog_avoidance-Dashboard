@@ -3,6 +3,7 @@
 import React from 'react';
 import { useVehicle } from '../../context/VehicleContext';
 import { Sliders, X, CloudFog, Gauge, ArrowRightLeft, AlertOctagon, RotateCcw, AlertTriangle, Radio } from 'lucide-react';
+import { audioSynth } from '../../utils/audioSynth';
 
 export const DemoSimPanel: React.FC = () => {
   const {
@@ -26,7 +27,6 @@ export const DemoSimPanel: React.FC = () => {
 
   return (
     <>
-      {/* Floating Trigger Button (Right Side) */}
       {/* Floating Trigger Button (Right Side) */}
       {!isSimPanelOpen && (
         <button
@@ -80,6 +80,22 @@ export const DemoSimPanel: React.FC = () => {
             >
               {emesrtLevel}
             </span>
+          </div>
+
+          {/* Quick Sound Actions */}
+          <div className="mb-4 grid grid-cols-2 gap-2 font-mono text-xs">
+            <button
+              onClick={() => audioSynth.playTruckHorn()}
+              className="p-2 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/40 text-amber-300 font-bold flex items-center justify-center gap-1.5 transition-all active:scale-95"
+            >
+              🎺 DUAL AIR HORN
+            </button>
+            <button
+              onClick={() => audioSynth.playAirBrakeHiss()}
+              className="p-2 rounded-xl bg-cyan-500/10 hover:bg-cyan-500/20 border border-cyan-500/40 text-cyan-300 font-bold flex items-center justify-center gap-1.5 transition-all active:scale-95"
+            >
+              🌬️ AIR BRAKE HISS
+            </button>
           </div>
 
           {/* Sliders Form */}
