@@ -57,6 +57,10 @@ export interface PitHazard {
   lngOffset: number;
 }
 
+export type CameraMode = 'ORBIT' | 'COCKPIT' | 'TOP_DOWN' | 'REAR';
+export type WeatherCondition = 'FOG' | 'DUST_STORM' | 'NIGHT_CLEAR' | 'HEAVY_RAIN';
+export type RoadsideScenario = 'CLEAR' | 'ROADSIDE_BREAKDOWN' | 'ONCOMING_HAULER' | 'ROCKFALL_OBSTACLE' | 'PIT_WORKER';
+
 export interface VehicleContextType {
   user: UserProfile;
   engineState: EngineState;
@@ -78,6 +82,11 @@ export interface VehicleContextType {
   isSimPanelOpen: boolean;
   isMuted: boolean;
   radarMode: 'DUAL' | 'FORWARD' | 'REAR';
+  
+  // New Camera, Weather & Roadside Simulation States
+  cameraMode: CameraMode;
+  weatherCondition: WeatherCondition;
+  roadsideScenario: RoadsideScenario;
   
   // Fleet GPS & Hazard Tracking
   nearbyVehicles: NearbyVehicle[];
@@ -103,8 +112,11 @@ export interface VehicleContextType {
   setGear: (gear: GearPosition) => void;
   setSelectedHealthNode: (nodeId: string | null) => void;
   setRadarMode: (mode: 'DUAL' | 'FORWARD' | 'REAR') => void;
+  setCameraMode: (mode: CameraMode) => void;
+  setWeatherCondition: (weather: WeatherCondition) => void;
+  setRoadsideScenario: (scenario: RoadsideScenario) => void;
   setFocusVehicleId: (id: string | null) => void;
-  applyPreset: (preset: 'FOG_HAZARD' | 'RESET_ROUTE' | 'ENGINE_FAULT' | 'AUTO_BRAKE') => void;
+  applyPreset: (preset: 'FOG_HAZARD' | 'RESET_ROUTE' | 'ENGINE_FAULT' | 'AUTO_BRAKE' | 'ROADSIDE_BREAKDOWN' | 'ONCOMING_HAULER' | 'ROCKFALL_OBSTACLE' | 'PIT_WORKER') => void;
   toggleSimPanel: () => void;
   toggleMute: () => void;
   addDiagnosticLog: (message: string, level?: DiagnosticLog['level']) => void;
@@ -131,8 +143,11 @@ export const VehicleProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const [distance, setDistance] = useState<number>(8.5); // meters (forward)
   const [rearDistance, setRearDistance] = useState<number>(11.0); // meters (rear)
   const [radarMode, setRadarMode] = useState<'DUAL' | 'FORWARD' | 'REAR'>('DUAL');
+  const [cameraMode, setCameraMode] = useState<CameraMode>('ORBIT');
+  const [weatherCondition, setWeatherCondition] = useState<WeatherCondition>('FOG');
+  const [roadsideScenario, setRoadsideScenario] = useState<RoadsideScenario>('CLEAR');
   const [rpm, setRpm] = useState<number>(0);
-  const [fogVisibility, setFogVisibility] = useState<number>(20); // %
+  const [fogVisibility, setFogVisibility] = useState<number>(45); // %
   const [steeringAngle, setSteeringAngle] = useState<number>(0); // deg
   const [truckX, setTruckX] = useState<number>(0); // lateral X position on road
   const [gear, setGear] = useState<GearPosition>('P');
@@ -205,9 +220,15 @@ export const VehicleProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const speedInMps = Math.max(speed * 0.277778, 0.01);
   const timeToCollision = parseFloat((distance / speedInMps).toFixed(1));
 
-  // Audio warning effects loop
+  // Continuous Real Heavy Diesel Engine Sound & Alarm Loop
   useEffect(() => {
-    if (engineState !== 'ACTIVE') return;
+    if (engineState !== 'ACTIVE') {
+      audioSynth.stopEngineLoop();
+      return;
+    }
+
+    // Continuously update realistic V16 diesel engine pitch, turbo whine & air brakes
+    audioSynth.updateEngineSound(speed, rpm, activeInputs.up, activeInputs.down, gear);
 
     if (threatZone === 'ZONE_1_EMERGENCY') {
       audioSynth.playEmergencyAlarm();
@@ -225,7 +246,7 @@ export const VehicleProvider: React.FC<{ children: React.ReactNode }> = ({ child
       }, interval);
       return () => clearInterval(timer);
     }
-  }, [engineState, threatZone, distance, speed]);
+  }, [engineState, threatZone, distance, speed, rpm, activeInputs.up, activeInputs.down, gear]);
 
   // Auth Functions
   const loginWithGoogle = (role: UserProfile['role'], name?: string, email?: string) => {
@@ -282,6 +303,7 @@ export const VehicleProvider: React.FC<{ children: React.ReactNode }> = ({ child
   };
 
   const triggerEngineStop = () => {
+    audioSynth.stopEngineLoop();
     setEngineState('STANDBY');
     setSpeed(0);
     setRpm(0);
@@ -289,18 +311,21 @@ export const VehicleProvider: React.FC<{ children: React.ReactNode }> = ({ child
     addDiagnosticLog('Engine stopped. CAS power in Low-Power Standby Mode.', 'warn');
   };
 
-  const applyPreset = (preset: 'FOG_HAZARD' | 'RESET_ROUTE' | 'ENGINE_FAULT' | 'AUTO_BRAKE') => {
+  const applyPreset = (preset: 'FOG_HAZARD' | 'RESET_ROUTE' | 'ENGINE_FAULT' | 'AUTO_BRAKE' | 'ROADSIDE_BREAKDOWN' | 'ONCOMING_HAULER' | 'ROCKFALL_OBSTACLE' | 'PIT_WORKER') => {
     switch (preset) {
       case 'FOG_HAZARD':
-        setFogVisibility(92);
-        setSpeed(26);
-        setDistance(3.4);
+        setFogVisibility(95);
+        setWeatherCondition('FOG');
+        setSpeed(22);
+        setDistance(3.8);
         addDiagnosticLog('DEMO PRESET APPLIED: Zero-Visibility Heavy Pit Fog Hazard.', 'warn');
         break;
       case 'RESET_ROUTE':
         setFogVisibility(15);
-        setSpeed(12);
-        setDistance(11.5);
+        setWeatherCondition('FOG');
+        setRoadsideScenario('CLEAR');
+        setSpeed(14);
+        setDistance(12.5);
         setEngineState('ACTIVE');
         addDiagnosticLog('DEMO PRESET APPLIED: Pit Haul Route Reset.', 'info');
         break;
@@ -315,6 +340,30 @@ export const VehicleProvider: React.FC<{ children: React.ReactNode }> = ({ child
         setSpeed(32);
         setDistance(1.4); // Immediate Zone 1 trigger
         addDiagnosticLog('EMESRT L9 DEMO: Rapid obstacle approach triggered Level 9 Emergency Stop.', 'critical');
+        break;
+      case 'ROADSIDE_BREAKDOWN':
+        setRoadsideScenario('ROADSIDE_BREAKDOWN');
+        setDistance(4.2);
+        setSpeed(18);
+        addDiagnosticLog('SCENARIO TRIGGERED: Roadside Breakdown Truck Detected on Pit Ramp.', 'warn');
+        break;
+      case 'ONCOMING_HAULER':
+        setRoadsideScenario('ONCOMING_HAULER');
+        setDistance(6.5);
+        setSpeed(24);
+        addDiagnosticLog('SCENARIO TRIGGERED: Oncoming Komatsu Hauler approaching on opposite lane.', 'info');
+        break;
+      case 'ROCKFALL_OBSTACLE':
+        setRoadsideScenario('ROCKFALL_OBSTACLE');
+        setDistance(2.8);
+        setSpeed(12);
+        addDiagnosticLog('SCENARIO TRIGGERED: Rockfall Dislodged Boulder on Roadside Edge.', 'critical');
+        break;
+      case 'PIT_WORKER':
+        setRoadsideScenario('PIT_WORKER');
+        setDistance(3.1);
+        setSpeed(8);
+        addDiagnosticLog('SCENARIO TRIGGERED: High-Vis Pit Worker detected on roadside shoulder.', 'warn');
         break;
     }
   };
@@ -442,6 +491,9 @@ export const VehicleProvider: React.FC<{ children: React.ReactNode }> = ({ child
         isSimPanelOpen,
         isMuted,
         radarMode,
+        cameraMode,
+        weatherCondition,
+        roadsideScenario,
         activeInputs,
         nearbyVehicles,
         nearestVehicle,
@@ -462,6 +514,9 @@ export const VehicleProvider: React.FC<{ children: React.ReactNode }> = ({ child
         setGear,
         setSelectedHealthNode,
         setRadarMode,
+        setCameraMode,
+        setWeatherCondition,
+        setRoadsideScenario,
         setFocusVehicleId,
         applyPreset,
         toggleSimPanel,

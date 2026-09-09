@@ -27,6 +27,9 @@ export const DigitalTwinCanvas: React.FC = () => {
     activeInputs,
     setControlInput,
     triggerEngineStart,
+    cameraMode,
+    setCameraMode,
+    roadsideScenario,
   } = useVehicle();
 
   const handleTouch = (dir: 'up' | 'down' | 'left' | 'right', active: boolean) => {
@@ -36,6 +39,20 @@ export const DigitalTwinCanvas: React.FC = () => {
     }
   };
 
+  // Determine Camera Position and LookAt target based on cameraMode
+  let camPos: [number, number, number] = [12, 8, 14];
+  let camFov = 45;
+  if (cameraMode === 'COCKPIT') {
+    camPos = [truckX + 1.0, 2.4, 1.8];
+    camFov = 65;
+  } else if (cameraMode === 'TOP_DOWN') {
+    camPos = [truckX, 26, 0.1];
+    camFov = 40;
+  } else if (cameraMode === 'REAR') {
+    camPos = [truckX, 3.5, -8.5];
+    camFov = 50;
+  }
+
   return (
     <div className="relative w-full h-[380px] sm:h-[460px] md:h-[540px] rounded-2xl overflow-hidden glass-panel border border-slate-800">
       {/* Top HUD Header Bar */}
@@ -43,20 +60,39 @@ export const DigitalTwinCanvas: React.FC = () => {
         <div className="flex items-center gap-2 sm:gap-3 bg-slate-900/90 backdrop-blur-md px-2.5 sm:px-3.5 py-1.5 rounded-lg border border-slate-700/60 pointer-events-auto">
           <div className="w-2.5 h-2.5 rounded-full bg-cyan-400 animate-pulse" />
           <span className="text-[10px] sm:text-xs font-mono font-bold tracking-wider text-slate-200 uppercase truncate">
-            360° DIGITAL TWIN // 4-ARROW DRIVING MODE
+            360° DIGITAL TWIN // {cameraMode} VIEW
           </span>
           <span className="hidden xs:inline-block text-[9px] sm:text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
             {engineState === 'ACTIVE' ? 'DRIVE ACTIVE' : 'READY'}
           </span>
         </div>
 
-        <div className="flex items-center gap-2 pointer-events-auto">
+        {/* Camera View Switcher Buttons */}
+        <div className="flex items-center gap-1 bg-slate-950/90 backdrop-blur-md p-1 rounded-xl border border-slate-800 pointer-events-auto font-mono text-[10px]">
+          <button
+            onClick={() => setCameraMode('ORBIT')}
+            className={`px-2 py-1 rounded-lg transition-all ${cameraMode === 'ORBIT' ? 'bg-cyan-500 text-slate-950 font-bold' : 'text-slate-400 hover:text-white'}`}
+          >
+            ORBIT 3D
+          </button>
+          <button
+            onClick={() => setCameraMode('COCKPIT')}
+            className={`px-2 py-1 rounded-lg transition-all ${cameraMode === 'COCKPIT' ? 'bg-cyan-500 text-slate-950 font-bold' : 'text-slate-400 hover:text-white'}`}
+          >
+            CABIN 1ST
+          </button>
+          <button
+            onClick={() => setCameraMode('TOP_DOWN')}
+            className={`px-2 py-1 rounded-lg transition-all ${cameraMode === 'TOP_DOWN' ? 'bg-cyan-500 text-slate-950 font-bold' : 'text-slate-400 hover:text-white'}`}
+          >
+            DRONE TOP
+          </button>
           <button
             onClick={() => setSelectedHealthNode(null)}
-            className="flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg bg-slate-900/80 hover:bg-slate-800 border border-slate-700 text-[10px] sm:text-xs font-mono text-slate-300 transition-colors"
+            className="p-1 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-700 text-cyan-400 ml-1"
+            title="Reset Camera"
           >
-            <RefreshCw className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-cyan-400" />
-            Reset Camera
+            <RefreshCw className="w-3 h-3" />
           </button>
         </div>
       </div>
@@ -83,27 +119,33 @@ export const DigitalTwinCanvas: React.FC = () => {
 
       {/* 3D Canvas */}
       <Canvas shadows gl={{ antialias: true, alpha: true }}>
-        <PerspectiveCamera makeDefault position={[12, 8, 14]} fov={45} />
-        <OrbitControls
-          enablePan={true}
-          enableZoom={true}
-          enableRotate={true}
-          maxPolarAngle={Math.PI / 2 - 0.05}
-          minDistance={6}
-          maxDistance={36}
-        />
+        <color attach="background" args={['#030712']} />
+        <PerspectiveCamera makeDefault position={camPos} fov={camFov} />
+        <fogExp2 attach="fog" color="#08101E" density={Math.max(0.015, (fogVisibility / 100) * 0.05)} />
+        
+        {cameraMode === 'ORBIT' && (
+          <OrbitControls
+            enablePan={true}
+            enableZoom={true}
+            enableRotate={true}
+            maxPolarAngle={Math.PI / 2 - 0.05}
+            minDistance={6}
+            maxDistance={36}
+          />
+        )}
 
         {/* Ambient & Directional Pit Lights */}
-        <ambientLight intensity={0.6} color="#94A3B8" />
+        <ambientLight intensity={0.7} color="#94A3B8" />
         <directionalLight
-          position={[20, 30, 15]}
-          intensity={1.4}
+          position={[20, 35, 20]}
+          intensity={1.6}
           color="#00E5FF"
           castShadow
           shadow-mapSize-width={2048}
           shadow-mapSize-height={2048}
         />
-        <pointLight position={[-15, 10, -15]} intensity={0.8} color="#FFB300" />
+        <pointLight position={[-15, 12, -15]} intensity={1.2} color="#FFB300" />
+        <pointLight position={[15, 12, 15]} intensity={0.8} color="#38BDF8" />
 
         <Suspense fallback={null}>
           {/* Arrow Keys Driving Physics Controller */}
@@ -126,7 +168,7 @@ export const DigitalTwinCanvas: React.FC = () => {
             truckX={truckX}
           />
 
-          {/* Concentric Color-Coded Threat Rectangles */}
+          {/* Concentric Color-Coded Threat Rectangles & Roadside Terrain */}
           <TerrainOverlay
             obstacleDistance={distance}
             rearDistance={rearDistance}
@@ -136,6 +178,7 @@ export const DigitalTwinCanvas: React.FC = () => {
             speed={speed}
             engineActive={engineState === 'ACTIVE'}
             truckX={truckX}
+            roadsideScenario={roadsideScenario}
           />
 
           {/* Clickable 3D Health Hotspots */}

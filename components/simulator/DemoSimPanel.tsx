@@ -196,47 +196,67 @@ export const DemoSimPanel: React.FC = () => {
         {/* Quick One-Click Presets */}
         <div className="mt-6 pt-4 border-t border-slate-800">
           <h4 className="text-xs font-mono font-bold text-slate-400 uppercase tracking-wider mb-3">
-            ONE-CLICK DEMO SCENARIOS
+            ROADSIDE & PIT SCENARIO PRESETS
           </h4>
           <div className="grid grid-cols-2 gap-2.5 font-mono text-xs">
             <button
-              onClick={() => applyPreset('FOG_HAZARD')}
+              onClick={() => applyPreset('ROADSIDE_BREAKDOWN')}
               className="p-2.5 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 text-amber-300 text-left transition-all"
             >
               <div className="font-bold flex items-center gap-1">
-                <CloudFog className="w-3.5 h-3.5" /> FOG HAZARD
+                <AlertTriangle className="w-3.5 h-3.5" /> ROADSIDE BREAKDOWN
               </div>
-              <div className="text-[10px] text-amber-400/80 mt-0.5">92% Fog, 26km/h, 3.4m</div>
+              <div className="text-[10px] text-amber-400/80 mt-0.5">Stationary Truck on Ramp</div>
+            </button>
+
+            <button
+              onClick={() => applyPreset('ONCOMING_HAULER')}
+              className="p-2.5 rounded-xl bg-cyan-500/10 hover:bg-cyan-500/20 border border-cyan-500/30 text-cyan-300 text-left transition-all"
+            >
+              <div className="font-bold flex items-center gap-1">
+                <Radio className="w-3.5 h-3.5" /> ONCOMING HAULER
+              </div>
+              <div className="text-[10px] text-cyan-400/80 mt-0.5">Komatsu on Opposite Lane</div>
+            </button>
+
+            <button
+              onClick={() => applyPreset('ROCKFALL_OBSTACLE')}
+              className="p-2.5 rounded-xl bg-red-500/10 hover:bg-red-500/20 border border-red-500/30 text-red-300 text-left transition-all"
+            >
+              <div className="font-bold flex items-center gap-1">
+                <AlertOctagon className="w-3.5 h-3.5" /> ROCKFALL BOULDER
+              </div>
+              <div className="text-[10px] text-red-400/80 mt-0.5">Dislodged Pit Rock Edge</div>
+            </button>
+
+            <button
+              onClick={() => applyPreset('PIT_WORKER')}
+              className="p-2.5 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-300 text-left transition-all"
+            >
+              <div className="font-bold flex items-center gap-1">
+                <Gauge className="w-3.5 h-3.5" /> PIT WORKER NEARBY
+              </div>
+              <div className="text-[10px] text-emerald-400/80 mt-0.5">High-Vis Vest Worker</div>
+            </button>
+
+            <button
+              onClick={() => applyPreset('FOG_HAZARD')}
+              className="p-2.5 rounded-xl bg-purple-500/10 hover:bg-purple-500/20 border border-purple-500/30 text-purple-300 text-left transition-all"
+            >
+              <div className="font-bold flex items-center gap-1">
+                <CloudFog className="w-3.5 h-3.5" /> 95% PIT FOG
+              </div>
+              <div className="text-[10px] text-purple-400/80 mt-0.5">Zero-Visibility Fog</div>
             </button>
 
             <button
               onClick={() => applyPreset('RESET_ROUTE')}
-              className="p-2.5 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-300 text-left transition-all"
+              className="p-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 text-left transition-all"
             >
               <div className="font-bold flex items-center gap-1">
-                <RotateCcw className="w-3.5 h-3.5" /> RESET ROUTE
+                <RotateCcw className="w-3.5 h-3.5 text-cyan-400" /> RESET ROUTE
               </div>
-              <div className="text-[10px] text-emerald-400/80 mt-0.5">15% Fog, 12km/h, Clear</div>
-            </button>
-
-            <button
-              onClick={() => applyPreset('ENGINE_FAULT')}
-              className="p-2.5 rounded-xl bg-purple-500/10 hover:bg-purple-500/20 border border-purple-500/30 text-purple-300 text-left transition-all"
-            >
-              <div className="font-bold flex items-center gap-1">
-                <AlertTriangle className="w-3.5 h-3.5" /> ENGINE FAULT
-              </div>
-              <div className="text-[10px] text-purple-400/80 mt-0.5">Engine Temp 118°C Overheat</div>
-            </button>
-
-            <button
-              onClick={() => applyPreset('AUTO_BRAKE')}
-              className="p-2.5 rounded-xl bg-red-500/10 hover:bg-red-500/20 border border-red-500/30 text-red-300 text-left transition-all"
-            >
-              <div className="font-bold flex items-center gap-1">
-                <AlertOctagon className="w-3.5 h-3.5" /> L9 EMERGENCY
-              </div>
-              <div className="text-[10px] text-red-400/80 mt-0.5">1.4m Hazard Auto-Brake</div>
+              <div className="text-[10px] text-slate-400 mt-0.5">Clear Pit Haul Route</div>
             </button>
           </div>
         </div>
