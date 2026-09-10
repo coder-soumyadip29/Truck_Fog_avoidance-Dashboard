@@ -120,7 +120,7 @@ export const CabinHMI: React.FC = () => {
           {/* AI DRIVER FATIGUE TRIGGER */}
           <button
             onClick={() => {
-              if (fatigueState === 'NORMAL') {
+              if (fatigueState === 'ALERT') {
                 triggerFatigueSimulation();
                 audioSynth.playTruckHorn();
               } else {
@@ -128,13 +128,13 @@ export const CabinHMI: React.FC = () => {
               }
             }}
             className={`px-2.5 py-1.5 rounded-xl text-[11px] font-bold border transition-all ${
-              fatigueState !== 'NORMAL'
+              fatigueState !== 'ALERT'
                 ? 'bg-red-500/20 text-red-400 border-red-500 animate-bounce'
                 : 'bg-slate-900/80 text-slate-400 border-slate-800 hover:text-white'
             }`}
             title="Simulate AI Driver Fatigue Eye-Blink Alert"
           >
-            👁️ FATIGUE {fatigueState !== 'NORMAL' ? 'ALARM!' : 'TEST'}
+            👁️ FATIGUE {fatigueState !== 'ALERT' ? 'ALARM!' : 'TEST'}
           </button>
 
           {/* 5G TELE-OP OVERRIDE TOGGLE */}

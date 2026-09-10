@@ -5,6 +5,7 @@ import { Canvas, useFrame } from '@react-three/fiber';
 import { OrbitControls, PerspectiveCamera } from '@react-three/drei';
 import * as THREE from 'three';
 import { useVehicle } from '../../context/VehicleContext';
+import { audioSynth } from '../../utils/audioSynth';
 import { DumperTruckMesh } from './DumperTruckMesh';
 import { SensorCones } from './SensorCones';
 import { TerrainOverlay } from './TerrainOverlay';
@@ -326,7 +327,7 @@ export const DigitalTwinCanvas: React.FC = () => {
       )}
 
       {/* --- AI DRIVER FATIGUE MONITORING WARNING MODAL --- */}
-      {fatigueState !== 'NORMAL' && (
+      {fatigueState !== 'ALERT' && (
         <div className="absolute top-16 right-4 z-30 font-mono text-xs bg-slate-950/95 backdrop-blur-xl border border-red-500 p-3.5 rounded-2xl shadow-[0_0_35px_rgba(239,68,68,0.5)] animate-bounce-slow flex flex-col gap-2 max-w-[280px]">
           <div className="flex items-center justify-between text-red-400 font-black text-[11px] uppercase">
             <span className="flex items-center gap-1.5">

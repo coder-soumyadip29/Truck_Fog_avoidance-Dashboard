@@ -130,11 +130,11 @@ export const DemoSimPanel: React.FC = () => {
 
             <button
               onClick={() => {
-                if (fatigueState === 'NORMAL') triggerFatigueSimulation();
+                if (fatigueState === 'ALERT') triggerFatigueSimulation();
                 else resetFatigue();
               }}
               className={`p-2 rounded-xl border font-bold flex items-center justify-center gap-1.5 transition-all active:scale-95 text-[11px] ${
-                fatigueState !== 'NORMAL'
+                fatigueState !== 'ALERT'
                   ? 'bg-red-500/20 text-red-400 border-red-500 animate-bounce'
                   : 'bg-slate-900 text-slate-400 border-slate-800 hover:text-white'
               }`}
